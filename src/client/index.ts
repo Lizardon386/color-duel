@@ -14,7 +14,6 @@ interface Refs {
   colorChip: HTMLElement;
   dirChip: HTMLElement;
   penaltyChip: HTMLElement;
-  timerChip: HTMLElement;
   logBtn: HTMLButtonElement;
   soundBtn: HTMLButtonElement;
   seats: HTMLElement;
@@ -40,7 +39,6 @@ let actions: GameActions | null = null;
 let view: ClientView | null = null;
 let timer: number | null = null;
 
-let turnDeadline = 0;
 let callDeadline = 0;
 let lastTopId = '';
 let lastTurn: string | null = null;
@@ -96,7 +94,6 @@ function build(host: HTMLElement): void {
   const colorChip = el('span', 'cd-chip');
   const dirChip = el('span', 'cd-chip');
   const penaltyChip = el('span', 'cd-chip penalty');
-  const timerChip = el('span', 'cd-chip timer');
   const spacer = el('span', 'spacer');
   const logBtn = el('button', 'cd-icon-btn');
   logBtn.type = 'button';
@@ -108,7 +105,7 @@ function build(host: HTMLElement): void {
   soundBtn.title = '音效开关';
   soundBtn.setAttribute('aria-label', '音效开关');
   soundBtn.textContent = soundEnabled() ? '🔊' : '🔇';
-  status.append(turnChip, colorChip, dirChip, penaltyChip, timerChip, spacer, logBtn, soundBtn);
+  status.append(turnChip, colorChip, dirChip, penaltyChip, spacer, logBtn, soundBtn);
 
   const main = el('div', 'cd-main');
   const seats = el('div', 'cd-seats');
@@ -161,7 +158,6 @@ function build(host: HTMLElement): void {
     colorChip,
     dirChip,
     penaltyChip,
-    timerChip,
     logBtn,
     soundBtn,
     seats,
@@ -228,15 +224,6 @@ function startTicker(): void {
     if (!view || !refs) return;
     const now = performance.now();
     const me = meOf(view);
-    if (view.phase === 'playing' && !view.noTurnTimer && turnDeadline) {
-      const left = Math.max(0, turnDeadline - now);
-      refs.timerChip.textContent = `剩 ${Math.ceil(left / 1000)}s`;
-      refs.timerChip.classList.toggle('urgent', left < 10000);
-    } else {
-      refs.timerChip.classList.remove('urgent');
-      refs.timerChip.textContent = view.noTurnTimer ? '不限时' : '';
-      if (!view.noTurnTimer && !turnDeadline) refs.timerChip.textContent = '';
-    }
     if (me?.mustCall && !me.calledLast) {
       const left = callDeadline ? Math.max(0, callDeadline - now) : (me.callDeadlineInMs ?? 0);
       refs.actCall.textContent = `只剩一张！${(left / 1000).toFixed(1)}s`;
@@ -285,14 +272,7 @@ function render(current: ClientView): void {
   refs.penaltyChip.hidden = current.pendingDraw <= 0;
   refs.penaltyChip.textContent = `待罚 +${current.pendingDraw}`;
 
-  turnDeadline = current.deadlineInMs === null ? 0 : performance.now() + current.deadlineInMs;
   callDeadline = me?.callDeadlineInMs ? performance.now() + me.callDeadlineInMs : 0;
-  if (current.phase === 'playing' && !current.noTurnTimer && current.deadlineInMs !== null) {
-    refs.timerChip.textContent = `剩 ${Math.ceil(current.deadlineInMs / 1000)}s`;
-  } else {
-    refs.timerChip.textContent = current.noTurnTimer ? '不限时' : '';
-  }
-  refs.timerChip.hidden = refs.timerChip.textContent === '';
 
   renderSeats(current, me);
   renderCenter(current, me, myTurn, hasPlayable, facingPenalty);

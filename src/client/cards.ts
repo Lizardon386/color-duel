@@ -62,7 +62,7 @@ export function createCard(card: Card): HTMLElement {
   bottom.className = 'cd-corner cd-br';
   bottom.textContent = VALUE_TEXT[card.value] ?? card.value;
 
-  element.append(face, glyph, top, bottom);
+  element.append(face, glyph, top);
 
   const tag = VALUE_TAG[card.value];
   if (tag) {
@@ -70,6 +70,8 @@ export function createCard(card: Card): HTMLElement {
     badge.className = 'cd-tag';
     badge.textContent = tag;
     element.append(badge);
+  } else {
+    element.append(bottom);
   }
   return element;
 }

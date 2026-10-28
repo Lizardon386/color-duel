@@ -20,7 +20,7 @@
 ## 3. 现在在哪
 
 - **代码完成，平台联调待做。** 规则层、状态机、机器人、客户端、规则资料与 rule-config 声明都已实现。
-- `npm test` 31/31；`npm run build` 生成 `dist/color-duel.bpmap`（约 100KB）；`bpmap doctor dist-pack` 通过。
+- `npm test` 33/33；`npm run build` 生成 `dist/color-duel.bpmap`（约 100KB）；`bpmap doctor dist-pack` 通过（含 reference 文档校验）。
 - SDK 契约已由平台仓库的 SDK 会话落地并推送：`950083c`，四包版本 0.3.0（**尚未发布 npm**）；本仓库当前通过本地 link 使用 0.3.0。
 - 平台侧（对局区全宽、建房规则表单、规则资料抽屉）由另一个会话在 `D:\agent_workspace\3178-battle-platform` 实现中。
 - 公开仓库尚未创建/推送；`uno-online` 未改动。
@@ -28,7 +28,7 @@
 ## 4. 下一步
 
 1. **等平台会话完成后跑真机联调**：装包 → 建房（勾规则）→ 加 3 个电脑 → 打完一局 → 房主 rematch；1280×800 与 600×400 各看一次。
-2. **发布 SDK 0.3.0**：`sdk-v0.3.0` tag → Actions 发布；然后把 `package.json` 的 SDK 依赖改为 `^0.3.0`，重新生成 lock，跑 CI 等价命令。
+2. **发布 SDK 0.3.0（需用户确认）**：`sdk-v0.3.0` tag → Actions 发布；然后把 `package.json` 的 SDK 依赖改为 `^0.3.0`，重新生成 lock，跑 CI 等价命令。
 3. **创建公开仓库并推首个提交**：`gh repo create Lizardon386/color-duel --public`，CI 绿后打 `v0.1.0` tag。
 4. 可选：把 8 人满桌、观战视角、质疑失败三类局面补进预览截图。
 
@@ -44,6 +44,8 @@
 - **机器人不用 `setTimeout`**：用 `botDueAt` + `tick`；动作被拒时按超时兜底，避免死循环。
 - **观战 `viewer` 为 `null`**：客户端靠 `view.viewer` 判断观战，不能只看 `actions.seatId()`。
 - **单文件客户端**：构建后 `dist-pack/client/client.js` 不能有 `import`；CSS 走 esbuild `text` loader 内联。
+- **reference 要写进 bpmap.json**：`bpmap doctor` 从清单读 `reference.entry`，只看 `GameModule.reference` 不会校验资料文档。
+- **带标签的卡不再画右下角值**：`cd-tag` 和右下角数字会叠在一起，`createCard` 已二选一。
 
 ## 6. 验证命令
 
