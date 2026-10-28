@@ -22,12 +22,12 @@
 - **代码完成，平台联调待做。** 规则层、状态机、机器人、客户端、规则资料与 rule-config 声明都已实现。
 - `npm test` 33/33；`npm run build` 生成 `dist/color-duel.bpmap`（约 100KB）；`bpmap doctor dist-pack` 通过（含 reference 文档校验）。
 - SDK 契约已由平台仓库的 SDK 会话落地并推送：`950083c`，四包版本 0.3.0（**尚未发布 npm**）；本仓库当前通过本地 link 使用 0.3.0。
-- 平台侧（对局区全宽、建房规则表单、规则资料抽屉）由另一个会话在 `D:\agent_workspace\3178-battle-platform` 实现中。
+- 平台侧已完成（3178 仓库 `7d5b4c3` / `7697d62` / `9495dba`，215/215）：对局区全宽、建房规则表单、规则资料抽屉，以及宿主对 `ruleConfig` / `reference` 的声明校验。
 - 公开仓库尚未创建/推送；`uno-online` 未改动。
 
 ## 4. 下一步
 
-1. **跑真机联调**：装包 → 建房（勾规则）→ 加 3 个电脑 → 打完一局 → 房主 rematch；1280×800 与 600×400 各看一次。协议级脚本在 `D:	mp\cd-integration.mjs`（临时目录，可能被清）。
+1. **跑真机联调**：装包 → 建房（勾规则）→ 加 3 个电脑 → 打完一局 → 房主 rematch；1280×800 与 600×400 各看一次。协议级脚本在 \`D:\tmp\cd-integration.mjs\`（临时目录，可能被清）。
 2. **发布 SDK 0.3.0（需用户确认）**：`sdk-v0.3.0` tag → Actions 发布；然后把 `package.json` 的 SDK 依赖改为 `^0.3.0`，重新生成 lock，跑 CI 等价命令。
 3. **创建公开仓库并推首个提交**：`gh repo create Lizardon386/color-duel --public`，CI 绿后打 `v0.1.0` tag。
 4. 可选：把 8 人满桌、观战视角、质疑失败三类局面补进预览截图。
@@ -82,4 +82,4 @@ node ../3178-battle-platform/packages/hostd/dist/cli.js host --port 3178 --lan-p
 ## 8. 交接记录
 
 - 2026-10-28 Qoder：**交接**：交给会话 `835cf812`；代码与文档已就绪（33/33），剩余真机联调、SDK 0.3.0 发布（待用户确认）、公开仓库与 CI。
-- 2026-10-28 Qoder：**重构落地**。从 `uno-online` 移植规则、状态机、AI、界面与规则文案；新增 rule-config 与 reference 声明；31 例测试、构建与 doctor 通过；平台联调与公开发布待做。
+- 2026-10-28 Qoder：**重构落地**。从 `uno-online` 移植规则、状态机、AI、界面与规则文案；新增 rule-config 与 reference 声明；33 例测试、构建与 doctor 通过；平台联调与公开发布待做。
