@@ -216,21 +216,32 @@ export class ColorDuel implements GameInstance {
   // ---------- 生命周期 ----------
 
   begin(): Outcome {
-    const seats = this.ctx.seats().filter((seat) => seat.role !== 'spectator');
-    if (seats.length < 2) return rejectOutcome('至少需要 2 名玩家');
-    this.players = seats
-      .slice()
-      .sort((a, b) => a.slot - b.slot)
-      .map((seat) => ({
-        seatId: seat.seatId,
-        hand: [],
-        calledLast: false,
-        mustCall: false,
-        callDeadline: null,
-        bot: seat.role === 'ai',
-      }));
+    if (!this.syncPlayers()) return rejectOutcome('至少需要 2 名玩家');
     this.deal();
     return [];
+  }
+
+  /** 按平台当前座位重建参与者；房主在结束后加/减座位时也能正确重开。 */
+  private syncPlayers(): boolean {
+    const seats = this.ctx
+      .seats()
+      .filter((seat) => seat.role !== 'spectator')
+      .sort((a, b) => a.slot - b.slot);
+    if (seats.length < 2) return false;
+    const existing = new Map(this.players.map((player) => [player.seatId, player]));
+    this.players = seats.map(
+      (seat) =>
+        existing.get(seat.seatId) ?? {
+          seatId: seat.seatId,
+          hand: [],
+          calledLast: false,
+          mustCall: false,
+          callDeadline: null,
+          bot: seat.role === 'ai',
+        },
+    );
+    for (const player of this.players) player.bot = this.ctx.seat(player.seatId)?.role === 'ai';
+    return true;
   }
 
   private deal(): void {
@@ -304,11 +315,13 @@ export class ColorDuel implements GameInstance {
   }
 
   onSeatLeave(seat: GameSeatInfo, phase: RoomPhase): Effect[] {
-    if (phase !== 'playing' || this.state !== 'playing') return [];
+    if (phase === 'lobby') return [];
     const index = this.players.findIndex((player) => player.seatId === seat.seatId);
     if (index < 0) return [];
     this.players.splice(index, 1);
+    this.botDueAt.delete(seat.seatId);
     this.forget(seat.seatId);
+    if (this.state === 'ended') return [];
     if (this.players.length < 2) {
       this.state = 'ended';
       this.winner = null;
@@ -337,6 +350,7 @@ export class ColorDuel implements GameInstance {
       const seat = this.ctx.seat(by);
       if (this.state !== 'ended') return rejectOutcome('这一局还没结束');
       if (seat?.role !== 'host') return rejectOutcome('只有房主能再来一局');
+      if (!this.syncPlayers()) return rejectOutcome('至少需要 2 名玩家');
       this.deal();
       return [];
     }

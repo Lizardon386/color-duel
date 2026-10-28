@@ -275,6 +275,26 @@ test('存档恢复：手牌、牌堆、回合与规则都还原，版本不符�
   assert.equal(colorDuel.acceptsSnapshot({ version: 99 }), false);
 });
 
+test('结束后有人离座：再来一局按当前座位重建，不发幽灵座位', () => {
+  const setup = started({ roles: ['host', 'player', 'player'] });
+  const { game } = setup;
+  resetTable(game, {
+    top: C('top', 'red', '3'),
+    hands: { s1: [C('a', 'red', '5')], s2: [C('b', 'blue', '2')], s3: [C('c', 'green', '4')] },
+    turn: 's1',
+  });
+  act(game, 's1', 'play', { cardId: 'a' });
+  assert.equal(game.state, 'ended');
+  const seat3 = setup.ctx.seat('s3');
+  setup.seats.splice(2, 1);
+  game.onSeatLeave(seat3, 'playing');
+  assert.equal(game.players.length, 2);
+  game.handle({ name: 'rematch' }, 's1');
+  assert.equal(game.players.length, 2);
+  assert.deepEqual(game.players.map((player) => player.hand.length), [7, 7]);
+  assert.equal(game.state, 'playing');
+});
+
 test('再来一局：只有房主能重开，重开后重新发牌', () => {
   const { game, ctx } = started({ roles: ['host', 'player'] });
   resetTable(game, { top: C('top', 'red', '3'), hands: { s1: [C('a', 'red', '5')], s2: [C('b', 'blue', '2')] }, turn: 's1' });

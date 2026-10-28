@@ -78,6 +78,7 @@ const manifest = {
   apiVersion: pkg.bp?.apiVersion ?? API_VERSION,
   server: 'server.js',
   client: entry,
+  ...(existsSync(join(outDir, 'reference.json')) ? { reference: { entry: 'reference.json' } } : {}),
 };
 writeFileSync(join(outDir, 'bpmap.json'), JSON.stringify(manifest, null, 2) + '\n');
 
