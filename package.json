@@ -1,0 +1,37 @@
+{
+  "name": "color-duel",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "变色对决 · 3178 对战平台的 No Mercy 卡牌游戏包",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lizardon386/color-duel.git"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "bp": {
+    "id": "color-duel",
+    "entry": "client/client.js",
+    "mode": "turn",
+    "apiVersion": 1
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:ts": "tsc -p tsconfig.json",
+    "test": "npm run build:ts && node --test --test-timeout=30000 \"test/*.test.mjs\"",
+    "doctor": "bpmap doctor dist-pack",
+    "pack": "bpmap pack dist-pack --out dist/color-duel.bpmap",
+    "install:platform": "node scripts/build.mjs --platform ../3178-battle-platform"
+  },
+  "dependencies": {
+    "@lizardon386/game-sdk": "^0.2.0"
+  },
+  "devDependencies": {
+    "@lizardon386/sdk-tools": "^0.2.0",
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.0"
+  }
+}

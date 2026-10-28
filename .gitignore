@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-pack/
+dist-ts/
+sdk/
+*.tsbuildinfo
+*.log
+data/
