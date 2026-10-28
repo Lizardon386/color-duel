@@ -27,7 +27,7 @@
 
 ## 4. 下一步
 
-1. **等平台会话完成后跑真机联调**：装包 → 建房（勾规则）→ 加 3 个电脑 → 打完一局 → 房主 rematch；1280×800 与 600×400 各看一次。
+1. **跑真机联调**：装包 → 建房（勾规则）→ 加 3 个电脑 → 打完一局 → 房主 rematch；1280×800 与 600×400 各看一次。协议级脚本在 `D:	mp\cd-integration.mjs`（临时目录，可能被清）。
 2. **发布 SDK 0.3.0（需用户确认）**：`sdk-v0.3.0` tag → Actions 发布；然后把 `package.json` 的 SDK 依赖改为 `^0.3.0`，重新生成 lock，跑 CI 等价命令。
 3. **创建公开仓库并推首个提交**：`gh repo create Lizardon386/color-duel --public`，CI 绿后打 `v0.1.0` tag。
 4. 可选：把 8 人满桌、观战视角、质疑失败三类局面补进预览截图。
@@ -44,13 +44,14 @@
 - **机器人不用 `setTimeout`**：用 `botDueAt` + `tick`；动作被拒时按超时兜底，避免死循环。
 - **观战 `viewer` 为 `null`**：客户端靠 `view.viewer` 判断观战，不能只看 `actions.seatId()`。
 - **单文件客户端**：构建后 `dist-pack/client/client.js` 不能有 `import`；CSS 走 esbuild `text` loader 内联。
+- **包清单与模块的 reference 必须一致**：宿主加载器会拒绝两者不一致的包；`scripts/build.mjs` 已从 `reference.json` 存在与否自动写包头，不要手改。
 - **reference 要写进 bpmap.json**：`bpmap doctor` 从清单读 `reference.entry`，只看 `GameModule.reference` 不会校验资料文档。
 - **带标签的卡不再画右下角值**：`cd-tag` 和右下角数字会叠在一起，`createCard` 已二选一。
 
 ## 6. 验证命令
 
 ```bash
-npm test                 # 31 例
+npm test                 # 33 例
 npm run build            # dist-pack/ + dist/color-duel.bpmap
 npm run doctor           # bpmap doctor dist-pack
 ```
@@ -80,4 +81,5 @@ node ../3178-battle-platform/packages/hostd/dist/cli.js host --port 3178 --lan-p
 
 ## 8. 交接记录
 
+- 2026-10-28 Qoder：**交接**：交给会话 `835cf812`；代码与文档已就绪（33/33），剩余真机联调、SDK 0.3.0 发布（待用户确认）、公开仓库与 CI。
 - 2026-10-28 Qoder：**重构落地**。从 `uno-online` 移植规则、状态机、AI、界面与规则文案；新增 rule-config 与 reference 声明；31 例测试、构建与 doctor 通过；平台联调与公开发布待做。
