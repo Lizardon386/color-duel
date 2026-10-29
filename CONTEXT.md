@@ -1,7 +1,7 @@
 # color-duel（变色对决）· 上下文与进展
 
 > 交接卡：当前状态、下一步、坑与验证命令。
-> 最近更新：2026-10-29　模式：三档（README / DESIGN / CONTEXT）　锚点：`efccf78`（main，已推 origin；本次交接提交在其后）
+> 最近更新：2026-10-29　模式：三档（README / DESIGN / CONTEXT）　锚点：`e61d256`（main，已推 origin；本次交接提交在其后）
 
 ## 1. 文档目录
 
@@ -26,11 +26,12 @@
 - **联调 PASS**：协议级（房间 4NTW）改规则后 `rulesHash` 变化、ready 重置、广播、中途 `seatResume`、rematch 7/7；UI（ZYT7）房主编辑/玩家只读、规则同步、开局、资料、刷新坐回；重启恢复（FFZ9）config/hash/手牌恢复后继续出牌。初版包在平台 `games/color-duel.bpmap` 留了一份。
 - 游戏 smoke：2/4/8 席 × 多 seed 共 40 局，20 对同 seed 的动作轨迹与最终状态一致、0 被拒；牌 ID 因模块级 `deckSeq/refillSeq` 跨运行不同。
 - **公开仓库已创建并推送**：<https://github.com/Lizardon386/color-duel>（`main`，CI 绿）；README 已统一标题、去掉商业变体名、新增「运行平台与依赖」小节（提交 `efccf78`）；`uno-online` 未改动。
+- **v0.1.0 已发布**：tag `v0.1.0`（指向 `e61d256`）+ GitHub Release，附 `color-duel.bpmap`（102,353 字节，SHA256 `b85db75129c4adbb807c631854aa6cb129d02239fedfb41125b6a05bc70916c8`）。
 
 ## 4. 下一步
 
 1. **用户自测（暂缓）**：包在 `dist/color-duel.bpmap`（平台 `games/` 也有一份）；用户现在不自测，随时可开 `3178对战平台.bat` 试。
-2. **`v0.1.0` tag（待用户决定）**：CI 已绿；tag 只是版本标记，不发 npm。要打时 `git tag -a v0.1.0 -m "color-duel 0.1.0"` + `git push origin v0.1.0`，可再附 `.bpmap` 作为 GitHub Release 资产。
+2. **UI 布局**：Hallmark audit 已出（3 critical / 4 major / 3 minor），A 布局重构或 B 最小修正待用户拍板；未动代码。
 3. **format 2（压缩二进制包）**：用户说后面再说，不动代码；重启讨论时按之前的 `BPMAP2` 方案。
 
 牌 ID 跨运行不复现保持现状（`deckSeq/refillSeq` 不改）。
@@ -83,6 +84,7 @@ npx bpmap doctor dist-pack --host http://127.0.0.1:3178
 
 ## 8. 交接记录
 
+- 2026-10-29 Qoder：**v0.1.0 发布**：tag `v0.1.0`（指向 `e61d256`）+ GitHub Release，附 `color-duel.bpmap`（SHA256 `b85db751…`）；CI 绿。
 - 2026-10-29 Qoder：**公开仓库与 README**：创建 `Lizardon386/color-duel` 并推 `main`（`65c0dcf`），CI run 40842602844 绿；README 统一标题、去掉 No Mercy、新增「运行平台与依赖」小节（`efccf78`，CI 40842888001 绿）；用户暂不自测，`v0.1.0` tag 待定。
 - 2026-10-29 Qoder：**SDK 0.3.0 正式依赖**：四包已发 npm（latest，tag `sdk-v0.3.0` + Release）；`game-sdk` / `sdk-tools` 切 `^0.3.0`，lock 指向 registry；`npm test` 33/33、构建、doctor（含 `--host`）通过；包哈希不变 `b85db751…`；提交 `1a78b9e`。
 - 2026-10-28 Qoder：**联调收工**：SDK 0.3.0 link；协议 4NTW / UI ZYT7 / 重启 FFZ9 全 PASS；33/33、smoke 40 局动作可复现（牌 ID 例外）；初版包 `dist/color-duel.bpmap`（SHA `b85db751…`），平台 `games/` 留了一份给用户自测；SDK 发布与公开仓库仍待用户确认。
