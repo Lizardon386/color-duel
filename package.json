@@ -26,10 +26,10 @@
     "install:platform": "node scripts/build.mjs --platform ../3178-battle-platform"
   },
   "dependencies": {
-    "@lizardon386/game-sdk": "^0.2.0"
+    "@lizardon386/game-sdk": "^0.3.0"
   },
   "devDependencies": {
-    "@lizardon386/sdk-tools": "^0.2.0",
+    "@lizardon386/sdk-tools": "^0.3.0",
     "@types/node": "^22.10.0",
     "esbuild": "^0.25.0",
     "typescript": "^5.7.0"
