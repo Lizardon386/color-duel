@@ -1,7 +1,7 @@
 # color-duel（变色对决）· 上下文与进展
 
 > 交接卡：当前状态、下一步、坑与验证命令。
-> 最近更新：2026-10-28　模式：三档（README / DESIGN / CONTEXT）
+> 最近更新：2026-10-28　模式：三档（README / DESIGN / CONTEXT）　锚点：`8c68c06`（main，无远端；本次交接提交在其后）
 
 ## 1. 文档目录
 
@@ -19,18 +19,20 @@
 
 ## 3. 现在在哪
 
-- **代码完成，平台联调待做。** 规则层、状态机、机器人、客户端、规则资料与 rule-config 声明都已实现。
-- `npm test` 33/33；`npm run build` 生成 `dist/color-duel.bpmap`（约 100KB）；`bpmap doctor dist-pack` 通过（含 reference 文档校验）。
-- SDK 契约已由平台仓库的 SDK 会话落地并推送：`950083c`，四包版本 0.3.0（**尚未发布 npm**）；本仓库当前通过本地 link 使用 0.3.0。
-- 平台侧已完成（3178 仓库 `7d5b4c3` / `7697d62` / `9495dba`，215/215）：对局区全宽、建房规则表单、规则资料抽屉，以及宿主对 `ruleConfig` / `reference` 的声明校验。
+- **代码与平台联调完成。** 规则层、状态机、机器人、客户端、规则资料与 rule-config 声明已实现并验证。
+- `npm test` 33/33；`npm run build` 生成 `dist/color-duel.bpmap`（102,353 字节，SHA256 `b85db75129c4adbb807c631854aa6cb129d02239fedfb41125b6a05bc70916c8`）；`bpmap doctor dist-pack` 与 `--host` 通过（含 reference 文档校验）。
+- SDK 0.3.0 用本地 link：四包 0.3.0，`game-sdk` 解析到平台 `packages/game-sdk`；`package.json` / lock 仍写 `^0.2.0`，未提交 link 状态。0.3.0 **尚未发 npm**。
+- 平台侧（3178 仓库，216/216）：房间内「本局规则」卡（`ruleConfig` 命令，仅房主、仅 lobby）、资料懒加载、单入口壳；平台交接卡在 `130c568`。
+- **联调 PASS**：协议级（房间 4NTW）改规则后 `rulesHash` 变化、ready 重置、广播、中途 `seatResume`、rematch 7/7；UI（ZYT7）房主编辑/玩家只读、规则同步、开局、资料、刷新坐回；重启恢复（FFZ9）config/hash/手牌恢复后继续出牌。初版包在平台 `games/color-duel.bpmap` 留了一份给用户自测。
+- 游戏 smoke：2/4/8 席 × 多 seed 共 40 局，20 对同 seed 的动作轨迹与最终状态一致、0 被拒；牌 ID 因模块级 `deckSeq/refillSeq` 跨运行不同。
 - 公开仓库尚未创建/推送；`uno-online` 未改动。
 
 ## 4. 下一步
 
-1. **跑真机联调**：装包 → 建房（勾规则）→ 加 3 个电脑 → 打完一局 → 房主 rematch；1280×800 与 600×400 各看一次。协议级脚本在 `D:\tmp\cd-integration.mjs`（临时目录，可能被清）。
-2. **发布 SDK 0.3.0（需用户确认）**：`sdk-v0.3.0` tag → Actions 发布；然后把 `package.json` 的 SDK 依赖改为 `^0.3.0`，重新生成 lock，跑 CI 等价命令。
+1. **等用户自测初版包**：`dist/color-duel.bpmap`（平台 `games/` 也有一份）；建房/改规则/开局，反馈先修问题。
+2. **发布 SDK 0.3.0（需用户确认）**：`sdk-v0.3.0` tag → Actions 发布；然后把本仓库依赖改 `^0.3.0`、重生成 lock，跑测试/构建。
 3. **创建公开仓库并推首个提交**：`gh repo create Lizardon386/color-duel --public`，CI 绿后打 `v0.1.0` tag。
-4. 可选：把 8 人满桌、观战视角、质疑失败三类局面补进预览截图。
+4. 可选：按局重置 `deckSeq/refillSeq` 让牌 ID 跨运行可复现；补 8 人/观战/质疑预览截图。
 
 ## 5. 关键约束与易踩的坑
 
@@ -47,23 +49,23 @@
 - **包清单与模块的 reference 必须一致**：宿主加载器会拒绝两者不一致的包；`scripts/build.mjs` 已从 `reference.json` 存在与否自动写包头，不要手改。
 - **reference 要写进 bpmap.json**：`bpmap doctor` 从清单读 `reference.entry`，只看 `GameModule.reference` 不会校验资料文档。
 - **带标签的卡不再画右下角值**：`cd-tag` 和右下角数字会叠在一起，`createCard` 已二选一。
+- **本地 link 不是提交状态**：`package.json` / lock 仍是 `^0.2.0`；跑 `npm install` 会换回 0.2.0，需重跑 link（或用 `--no-save` 的 0.3.0 tarball）；不要把 link 结果提交。
+- **牌 ID 跨运行不复现**：`rules.ts` 的 `deckSeq/refillSeq` 是模块级计数器；动作轨迹可复现，cardId 不能跨进程回放。若要按 ID 回放，按局重置计数器。
+- **`ruleConfig` 是平台命令**：游戏不订阅消息；平台改规则后重新 `normalizeConfig`，开局/恢复时只通过 `create` / `resume` 的 config 进入游戏。
+- **快照契约**：`snapshot.version = 1`，`acceptsSnapshot` 只认 1；`resume` 用 `ctx.config` 重建，别把 config 写死在快照里。
+- **重启恢复测试要先激活房主能力**：单入口壳只有 `POST /api/host/ready` 才开 HostStore/落盘，纯 WS 建房不落盘。
 
 ## 6. 验证命令
 
 ```bash
 npm test                 # 33 例
 npm run build            # dist-pack/ + dist/color-duel.bpmap
-npm run doctor           # bpmap doctor dist-pack
+npx bpmap doctor dist-pack --host http://127.0.0.1:3178
 ```
 
-装进平台：
+装进平台：把 `dist/color-duel.bpmap` 拷到 `games/`，起 `3178对战平台.bat`（或 `node packages/hostd/dist/cli.js shell --port 3178 --lan-port 3000`）。
 
-```bash
-node scripts/build.mjs --platform ../3178-battle-platform
-node ../3178-battle-platform/packages/hostd/dist/cli.js host --port 3178 --lan-port 3000
-```
-
-代码健康门槛：`npm test`、`npm run build`、`npx bpmap doctor dist-pack`。平台仓库改动另跑 `npm test` / `npm run seam` / `npx tsc -b`。
+代码健康门槛：`npm test`、`npm run build`、`npx bpmap doctor dist-pack`。平台仓库改动另跑 `npm test`（216）/ `npm run seam` / `npx tsc -b`。
 
 ## 7. 关键入口
 
@@ -81,5 +83,6 @@ node ../3178-battle-platform/packages/hostd/dist/cli.js host --port 3178 --lan-p
 
 ## 8. 交接记录
 
+- 2026-10-28 Qoder：**联调收工**：SDK 0.3.0 link；协议 4NTW / UI ZYT7 / 重启 FFZ9 全 PASS；33/33、smoke 40 局动作可复现（牌 ID 例外）；初版包 `dist/color-duel.bpmap`（SHA `b85db751…`），平台 `games/` 留了一份给用户自测；SDK 发布与公开仓库仍待用户确认。
 - 2026-10-28 Qoder：**交接**：交给会话 `835cf812`；代码与文档已就绪（33/33），剩余真机联调、SDK 0.3.0 发布（待用户确认）、公开仓库与 CI。
 - 2026-10-28 Qoder：**重构落地**。从 `uno-online` 移植规则、状态机、AI、界面与规则文案；新增 rule-config 与 reference 声明；33 例测试、构建与 doctor 通过；平台联调与公开发布待做。
