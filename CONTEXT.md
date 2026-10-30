@@ -1,7 +1,7 @@
 # color-duel（变色对决）· 上下文与进展
 
 > 交接卡：当前状态、下一步、坑与验证命令。
-> 最近更新：2026-10-30　模式：三档（README / DESIGN / CONTEXT）　锚点：`d761737`（main，已推 origin；本次交接提交在其后）
+> 最近更新：2026-10-30　模式：三档（README / DESIGN / CONTEXT）　锚点：`dad7053`（main，已推 origin；v0.2.2 已发布）
 
 ## 1. 文档目录
 
@@ -10,6 +10,7 @@
 | [README.md](README.md) | 玩家 / 开发者 | 游戏介绍、运行平台与依赖、快速开始、规则摘要、配置项、限制 |
 | [DESIGN.md](DESIGN.md) | 开发者 / 评审 | 目标与约束、架构、状态机、计时与机器人、平台接缝、设计决策 |
 | [CONTEXT.md](CONTEXT.md)（本文） | 维护者 / 交接 agent | 当前状态、下一步、坑与验证命令、交接记录 |
+| [压卡备份.md](压卡备份.md) | 维护者 | 历次压卡搬出的日志块（逐字保留，供追溯） |
 
 ## 2. 目标与完成定义
 
@@ -19,25 +20,17 @@
 
 ## 3. 现在在哪
 
-- **代码与平台联调完成。** 规则层、状态机、机器人、客户端、规则资料与 rule-config 声明已实现并验证。
-- `npm test` **37/37**；`npm run build` 生成 **0.2.2** 包 `dist/color-duel.bpmap`（127,287 字节，SHA256 `83b0a7b90f22182e4501bb508b486d4ed6a6e793e19baa7844515bab8c906777`）；`bpmap doctor` 本地通过；平台 `games/` 已换 0.2.2。
-- **界面重做（0.2.1，未发布）**：对手上半环 + 圆形头像（座位色 + 7 种花纹，走 seatOptions.avatar）、自己在底部；出牌/摸牌飞牌动画、回合呼吸；生效色光晕、待罚徽标、手牌压缩 + 两字标签 + 扇形、操作条居中；修掉「11 张手牌撑破整桌」的网格缺陷。截图见 `docs/images/game-table.png`。
+- **代码与平台联调完成**：规则层/状态机/机器人/客户端/资料/rule-config 已实现验证；0.2.0 的座位级选项、SDK 0.4.0 与平台三栏联调明细见 [压卡备份.md](压卡备份.md) §1。
+- `npm test` **37/37**；`npm run build` 生成 **0.2.2** 包 `dist/color-duel.bpmap`（127,814 字节，SHA256 `83b0a7b90f22182e4501bb508b486d4ed6a6e793e19baa7844515bab8c906777`）；`bpmap doctor` 通过；平台 `games/` 已换 0.2.2。
+- **界面重做（0.2.1，并入 0.2.2 发布）**：对手上半环 + 圆形头像（座位色 + 7 种花纹，走 seatOptions.avatar）、自己在底部；出牌/摸牌飞牌动画、回合呼吸；生效色光晕、待罚徽标、手牌压缩 + 两字标签 + 扇形、操作条居中；修掉「11 张手牌撑破整桌」的网格缺陷。截图见 `docs/images/game-table.png`。
 - **牌桌可读性增强（0.2.2，已发布 `v0.2.2`）**：UNO 式方向环（围着两个牌堆，4 个箭头顺/逆时针，反转牌落下时整环闪一下）、出牌气泡（谁出了什么直接飘在头像上方，数字牌报点数、功能牌报「+2 / 反转 / 换色 / 弃色」）、轮到自己时手牌区顶部亮一条金边。CDP 实测 480×360 / 600×360 / 1090×485 与 8 人局：方向环均完整落在桌面内不裁切，4 个箭头齐全，气泡能正确挂在出牌者席位上。
-- **座位级选项已接**（SDK 0.4.0 registry）：`seatOptions` 声明 `difficulty`（仅 ai，easy/normal/cold，默认 easy）与 `color`（host/player/ai；#ef4444 / #f59e0b / #22c55e / #3b82f6）；`normalizeSeatOptions` 先按角色给默认（AI easy、颜色按 slot 轮转）再用合法的 raw 覆盖；AI 逐座读 `options.difficulty`，服务端 serialize 带每座 `options`，客户端座位条用座位框颜色表示（不再画色点）；全局 `ruleConfig.difficulty` 已删除。最终联调：平台 `a634d57`（三栏布局）+ 本包，号码牌改色/AI 难度/转交房主/解散房间通过；协议猴测 seed 717（8×300×3）0 违规；UI 猴测 seed 909（4×60）0 违规。
-- SDK 0.4.0 **已发 npm**（四包 `latest` 均 0.4.0；tag `sdk-v0.4.0` + Release）；本仓库 `@lizardon386/game-sdk` / `sdk-tools` 已是 `^0.4.0`，lock 指向 registry，四包都在本仓库 `node_modules`（0.4.0）；依赖切换见提交 `899e836`。
-- 平台侧（3178 仓库，232/232）：房间内「本局规则」卡、资料懒加载、单入口壳、席位行号码牌选色/电脑难度下拉、三栏布局、转交房主/解散房间；平台交接卡在 `a634d57`。
-- **联调 PASS**：协议级（房间 4NTW）改规则后 `rulesHash` 变化、ready 重置、广播、中途 `seatResume`、rematch 7/7；UI（ZYT7）房主编辑/玩家只读、规则同步、开局、资料、刷新坐回；重启恢复（FFZ9）config/hash/手牌恢复后继续出牌。初版包在平台 `games/color-duel.bpmap` 留了一份。
-- 游戏 smoke：2/4/8 席 × 多 seed 共 40 局，20 对同 seed 的动作轨迹与最终状态一致、0 被拒；牌 ID 因模块级 `deckSeq/refillSeq` 跨运行不同。
-- **公开仓库与发布**：<https://github.com/Lizardon386/color-duel>（`main`，CI 绿）；README 统一标题、去掉商业变体名、新增「运行平台与依赖」（`efccf78`）；tag `v0.2.2`（指向 `dc69623`）+ [Release](https://github.com/Lizardon386/color-duel/releases/tag/v0.2.2) 附 0.2.2 包（127,814 B，SHA256 `83b0a7b9…`）与 `SHA256SUMS`，CI 41038148682 绿；tag `v0.2.0`（指向 `cdd796f`）+ [Release](https://github.com/Lizardon386/color-duel/releases/tag/v0.2.0) 附 0.2.0 包（104,268 B，SHA256 `72410de4…`）与 `SHA256SUMS`；v0.1.0 保留；0.2.1 未单独发布，改动并入 0.2.2。
+- **公开仓库与发布**：<https://github.com/Lizardon386/color-duel>（`main`，CI 绿）；tag `v0.2.2`（指向 `dc69623`）+ [Release](https://github.com/Lizardon386/color-duel/releases/tag/v0.2.2) 附 0.2.2 包（127,814 B，SHA256 `83b0a7b9…`）与 `SHA256SUMS`，CI 41038148682 绿；tag `v0.2.0`（指向 `cdd796f`）+ Release 附 0.2.0 包（104,268 B，SHA256 `72410de4…`）；v0.1.0 保留；0.2.1 未单独发布，改动并入 0.2.2。
 
 ## 4. 下一步
 
 1. **用户自测 0.2.2**：平台 `games/` 已换新包（SHA `83b0a7b9…`），重启宿主后建房；重点看方向环的顺/逆序、别人出牌时飘出的气泡、轮到自己时手牌区金条，再看 8 席、10 张以上手牌、报牌倒计时、弃牌弹窗。
-2. **0.2.2 已发布**：tag `v0.2.2`（`dc69623`）+ [Release](https://github.com/Lizardon386/color-duel/releases/tag/v0.2.2)，CI 绿；剩下的是用户自测（见上一条）。
-3. **format 2（压缩二进制包）**：用户说后面再说，不动代码；重启讨论时按之前的 `BPMAP2` 方案。
-4. **可选打磨**：宽屏留白（席位环排布）、结算页战绩，都未立项。
-
-牌 ID 跨运行不复现保持现状（`deckSeq/refillSeq` 不改）。
+2. **format 2（压缩二进制包）**：用户说后面再说，不动代码；重启讨论时按之前的 `BPMAP2` 方案。
+3. **可选打磨**：宽屏留白（席位环排布）、结算页战绩，都未立项。
 
 ## 5. 关键约束与易踩的坑
 
@@ -63,18 +56,19 @@
 - **`ruleConfig` 是平台命令**：游戏不订阅消息；平台改规则后重新 `normalizeConfig`，开局/恢复时只通过 `create` / `resume` 的 config 进入游戏。
 - **快照契约**：`snapshot.version = 1`，`acceptsSnapshot` 只认 1；`resume` 用 `ctx.config` 重建，别把 config 写死在快照里。
 - **重启恢复测试要先激活房主能力**：单入口壳只有 `POST /api/host/ready` 才开 HostStore/落盘，纯 WS 建房不落盘。
+- **平台仓库有别人未提交的改动**：`3178-battle-platform` 当时 HEAD `95c72b6`，另有 7 个未提交改动（`.gitignore` / `DESIGN` / `README` / `client` 三件 / style-hooks 测试），不是本任务产生，别顺手提交、回滚或格式化。
 
 ## 6. 验证命令
 
 ```bash
-npm test                 # 37 例
+npm test                 # 37 例（已含 tsc 类型检查）
 npm run build            # dist-pack/ + dist/color-duel.bpmap
 npx bpmap doctor dist-pack --host http://127.0.0.1:3178
 ```
 
 装进平台：把 `dist/color-duel.bpmap` 拷到 `games/`，起 `3178对战平台.bat`（或 `node packages/hostd/dist/cli.js shell --port 3178 --lan-port 3000`）。
 
-代码健康门槛：`npm test`、`npm run build`、`npx bpmap doctor dist-pack`。平台仓库改动另跑 `npm test`（216）/ `npm run seam` / `npx tsc -b`。
+代码健康门槛：`npm test`、`npm run build`、`npx bpmap doctor dist-pack`。平台仓库改动另跑 `npm test`（216）/ `npm run seam` / `npx tsc -b`。发版用 `gh release create vX.Y.Z`（gh 已认证 Lizardon386），附 `dist/color-duel.bpmap` + `color-duel-vX.Y.Z-SHA256SUMS`；UI 验证脚手架在 `.workbuddy-ai/tmp/`（gitignored，含 `cdp-verify.mjs` / `shot.mjs`，重装即丢）。
 
 ## 7. 关键入口
 
@@ -93,6 +87,7 @@ npx bpmap doctor dist-pack --host http://127.0.0.1:3178
 
 ## 8. 交接记录
 
+- 2026-10-30 WorkBuddy：**收工**：v0.2.2 已发布（tag `v0.2.2` → `dc69623`，Release + CI 41038148682 绿）；压卡把 0.2.0 联调/SDK 明细搬到 `压卡备份.md`，CONTEXT 104 → 98 行；锚点更新为 `dad7053`；下一家按「接盘」读卡，先跑 `npm test` + `npm run build` + `npx bpmap doctor`，再做用户自测（方向环/气泡/金条）。
 - 2026-10-30 WorkBuddy：**0.2.2 发布**：tag `v0.2.2`（指向 `dc69623`）+ GitHub Release，附 `color-duel.bpmap`（127,814 B，SHA256 `83b0a7b9…`）与 `color-duel-v0.2.2-SHA256SUMS`；CI 41038148682 绿；0.2.1 未单独发布，其改动并入本版 Release 说明；CONTEXT 的状态与下一步已同步为「已发布」。
 - 2026-10-30 WorkBuddy：**牌桌可读性增强（0.2.2）**：UNO 式方向环（围着两个牌堆的 4 个箭头，顺/逆时针靠整环 `scaleX(-1)` 镜像，反转牌落下时闪一下）、出牌气泡（谁出了什么直接飘在头像上方：数字牌报点数、功能牌报「+2 / 反转 / 换色 / 弃色」）、轮到自己时手牌区顶部亮金条。`detect` 只记录 `bubble` / `dirFlip`，`playFlights` 负责消费；37/37、tsc、构建、doctor 通过；CDP 在 480×360 / 600×360 / 1090×485 与 8 人局实测，环均不出桌、箭头 4 个、气泡能挂到出牌者席位；包 `83b0a7b9`（127,287B），平台 `games/` 已换。
 - 2026-10-30 WorkBuddy：**UI 重做（0.2.1）**：先做 UI 评审（600×360 实测 11 张手牌即撑破整桌、右侧按钮被裁；弃牌池把牌切半），再按斗地主/三国杀牌桌习惯重排：圆形头像（座位色 + 7 种花纹，seatOptions.avatar）+ 上半环、自己固定底部、出牌/摸牌飞牌、回合呼吸、生效色光晕、待罚徽标、手牌压缩 + 两字标签 + 扇形、操作条居中；37/37、构建、doctor 通过；包 `33f2befd`（121,628B）。
