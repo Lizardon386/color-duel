@@ -12,7 +12,7 @@ export interface PlayerView {
   role: 'host' | 'player' | 'ai' | 'spectator';
   cardCount: number;
   connected: boolean;
-  options: { color?: string; difficulty?: string };
+  options: { color?: string; difficulty?: string; avatar?: string };
   calledLast: boolean;
   mustCall: boolean;
   callDeadlineInMs: number | null;

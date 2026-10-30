@@ -165,7 +165,7 @@ flowchart TD
 
 ### 6.3 座位选项（seatOptions）
 
-`GameModule.seatOptions` 声明 `difficulty`（仅 ai，easy/normal/cold，默认 easy）和 `color`（host/player/ai，红黄绿蓝，带十六进制色块）。`normalizeSeatOptions(role, slot, raw)` 负责按角色收口、按 `slot` 轮转默认色（1 红 2 黄 3 绿 4 蓝…），非法值回落；平台建座、改选项和重启恢复都会调用。AI 决策逐座读 `seat.options.difficulty`；座位颜色写进 `serialize` 的 `players[].options`，客户端用座位框颜色呈现。改选项走 `hostSeat {op:'setOptions'}`，只房主、只 lobby，平台持久化并广播。
+`GameModule.seatOptions` 声明 `difficulty`（仅 ai，easy/normal/cold，默认 easy）、`color`（host/player/ai，红黄绿蓝，带十六进制色块）和 `avatar`（host/player/ai，7 种花纹，纯装饰）。`normalizeSeatOptions(role, slot, raw)` 负责按角色收口、按 `slot` 轮转默认色与默认花纹（1 红 2 黄 3 绿 4 蓝…；花纹同理），非法值回落；平台建座、改选项和重启恢复都会调用。AI 决策逐座读 `seat.options.difficulty`；座位颜色与花纹写进 `serialize` 的 `players[].options`，客户端据此渲染头像。改选项走 `hostSeat {op:'setOptions'}`，只房主、只 lobby，平台持久化并广播。
 
 ### 6.4 规则资料（reference）
 
@@ -177,11 +177,13 @@ flowchart TD
 
 ### 6.6 界面与牌桌
 
-界面按 UNO 一类的牌桌习惯组织：状态在上、对手在中间、自己的手牌在下，操作紧贴手牌。
+界面按斗地主 / 三国杀一类的牌桌习惯组织：对手在上半环、自己在底部、手牌在下、操作紧贴手牌。
 
-- **席位**：名字上方压一小叠牌背（最多 6 张），一眼看出这家还剩多少牌；精确张数仍在下面的数字里。座位颜色染在席位底色与描边上。
+- **席位**：圆形头像取昵称首字，底色是座位色，底纹是座位花纹（7 种，纯 CSS 渐变，不引图片）；张数做成头像右下角的白色徽标；「AI」与「你」是头像角标；未报牌 / 被跳过 / 离线是挂在头像右上角的小状态牌。席位用 `space-evenly` 横向铺开，中间最高、两端回落，形成上半环；自己固定在最左侧操作条，像斗地主自己的那一席。
+- **回合**：当前玩家的头像换金环并做 1.9s 呼吸，别靠读状态条找轮到谁。
 - **弃牌堆**：按生效颜色在牌后铺一层径向光晕，不读状态条也知道现在打什么色；黑色顶牌额外加一圈实色环，因为牌面本身不带颜色。
 - **待罚**：红色徽标压在弃牌堆右上角，和状态条的「待罚 +N」同源，不用来回看两处。
+- **飞牌**：出牌时从出牌者头像飞一张到弃牌堆，落地后才显示牌面（先隐藏，落地回调再显示），避免同一张牌出现两次；摸牌时从牌堆飞一张牌背到本人头像或手牌，按张数错开 55ms。动画走 Web Animations，`prefers-reduced-motion` 下直接跳到终态。
 - **手牌间距**：`--cd-step = clamp(0.5cw, (可用宽 - cw) / (n-1), 0.82cw)`，牌多时自动压缩；压到下限还放不下才横向滚动，两端用遮罩渐隐提示还有牌。
 - **标签**：四字标签放不下时切两字（`.dense`），避免被下一张牌压掉半行字。
 - **扇形**：手牌按位置给 ±3° 张角，牌数 ≤4 或进入密集模式时收平，避免小牌组看起来歪。
@@ -217,7 +219,7 @@ flowchart TD
 | [test/rules.test.mjs](test/rules.test.mjs) | 牌堆与开关、合法性、抽牌/补充牌、rule-config 与 reference 契约 |
 | [test/game.test.mjs](test/game.test.mjs) | 开局、出牌、接龙、质疑、碰、甩色、0/7、报牌、上限、超时、座位离开、存档、rematch、隐私 |
 | [test/bots.test.mjs](test/bots.test.mjs) | 机器人自走收敛、牌 id 不重复、PVE/PVP 计时差异 |
-| [test/seat-options.test.mjs](test/seat-options.test.mjs) | seatOptions 声明、按 slot 默认色、AI 默认 easy、serialize/resume、逐座难度 |
+| [test/seat-options.test.mjs](test/seat-options.test.mjs) | seatOptions 声明、按 slot 默认色/花纹、AI 默认 easy、serialize/resume、逐座难度 |
 
 `npm test` 先 `tsc` 编译到 `dist-ts/`，再用 `node --test` 跑 `.mjs` 测试。
 

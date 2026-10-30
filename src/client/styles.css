@@ -87,48 +87,101 @@ button { font: inherit; }
 
 /* ---------- 牌桌 ---------- */
 .cd-main { position: relative; min-height: 0; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 2px; }
-.cd-seats { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; padding: 2px 0; min-width: 0; }
+.cd-seats { display: flex; justify-content: space-evenly; flex-wrap: wrap; align-items: flex-start; gap: 4px; padding: 9px 4px 0; min-width: 0; }
 .cd-seat {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  min-width: 62px;
-  max-width: 92px;
-  padding: 3px 6px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  background: color-mix(in srgb, var(--cd-seat-color, #000) 14%, rgba(0, 0, 0, 0.34));
-  border: 2px solid var(--cd-seat-color, var(--cd-line));
-  font-size: clamp(10px, calc(var(--cd-cw) * 0.15), 13px);
-  transition: box-shadow 0.2s, background 0.2s, opacity 0.2s;
+  gap: 2px;
+  min-width: 48px;
+  max-width: 64px;
+  font-size: clamp(11px, calc(var(--cd-cw) * 0.16), 14px);
+  transform: translateY(var(--cd-lift, 0px));
+  transition: opacity 0.2s;
 }
-.cd-seat.active { background: rgba(242, 193, 78, 0.18); box-shadow: 0 0 0 2px rgba(242, 193, 78, 0.55); }
+/* 头像：座位色做底，白环压边，回合到了换金环 + 光晕 */
+.cd-avatar {
+  position: relative;
+  width: clamp(30px, calc(var(--cd-cw) * 0.55), 46px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--cd-seat-color, #4a5a52);
+  background: linear-gradient(165deg, var(--cd-seat-color, #4a5a52), color-mix(in srgb, var(--cd-seat-color, #4a5a52) 52%, #06110b));
+  box-shadow: inset 0 -5px 9px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.86), 0 0 0 3.5px rgba(0, 0, 0, 0.34), 0 3px 7px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.cd-avatar-face { position: relative; z-index: 1; font-weight: 900; font-size: calc(var(--cd-cw) * 0.3); line-height: 1; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+/* 头像花纹：纯 CSS 渐变，跟着座位色走，不引外部图片 */
+.cd-avatar-pattern {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 0;
+  opacity: 0.4;
+  pointer-events: none;
+  background-image: var(--cd-pattern, none);
+  background-size: var(--cd-pattern-size, 10px 10px);
+}
+.cd-seat[data-avatar="dot"] { --cd-pattern: radial-gradient(rgba(255, 255, 255, 0.95) 1.1px, transparent 1.2px); --cd-pattern-size: 8px 8px; }
+.cd-seat[data-avatar="stripe"] { --cd-pattern: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.95) 0 2px, transparent 2px 7px); }
+.cd-seat[data-avatar="check"] { --cd-pattern: repeating-conic-gradient(rgba(255, 255, 255, 0.95) 0 25%, transparent 0 50%); --cd-pattern-size: 10px 10px; }
+.cd-seat[data-avatar="ring"] { --cd-pattern: repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95) 0 1.5px, transparent 1.5px 6px); }
+.cd-seat[data-avatar="ray"] { --cd-pattern: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.95) 0 9deg, transparent 9deg 30deg); }
+.cd-seat[data-avatar="cross"] {
+  --cd-pattern: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.9) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.9) 0 1px, transparent 1px 6px);
+}
+.cd-seat[data-color="yellow"] .cd-avatar-face { color: #3a2800; text-shadow: none; }
+.cd-seat.active .cd-avatar {
+  transform: translateY(-1px);
+  animation: cd-turn-pulse 1.9s ease-in-out infinite;
+}
+@keyframes cd-turn-pulse {
+  0%, 100% {
+    box-shadow: inset 0 -5px 9px rgba(0, 0, 0, 0.3), 0 0 0 2px var(--cd-gold), 0 0 0 3.5px rgba(0, 0, 0, 0.34), 0 0 9px rgba(242, 193, 78, 0.35);
+  }
+  50% {
+    box-shadow: inset 0 -5px 9px rgba(0, 0, 0, 0.3), 0 0 0 2px var(--cd-gold), 0 0 0 3.5px rgba(0, 0, 0, 0.34), 0 0 18px rgba(242, 193, 78, 0.8);
+  }
+}
 .cd-seat.offline { opacity: 0.5; }
-.cd-seat.me { border-style: dashed; }
-.cd-seat-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
-/* 席位上方的小牌背，一眼看出这家还有多少牌 */
-.cd-seat-fan { display: flex; justify-content: center; align-items: flex-end; height: 11px; margin-bottom: 1px; }
-.cd-back { width: 7px; height: 10px; border-radius: 1.5px; background: linear-gradient(160deg, #3a4d58, #0d151a); border: 1px solid rgba(255, 255, 255, 0.32); }
-.cd-back + .cd-back { margin-left: -2px; }
-.cd-seat-meta { display: flex; align-items: center; gap: 4px; font-size: clamp(9px, calc(var(--cd-cw) * 0.135), 12px); color: var(--cd-muted); }
+.cd-seat-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+/* 张数挂在头像右下角，像徽章 */
 .cd-count {
-  min-width: 16px;
+  position: absolute;
+  right: -5px;
+  bottom: -3px;
+  min-width: clamp(16px, calc(var(--cd-cw) * 0.26), 21px);
+  height: clamp(16px, calc(var(--cd-cw) * 0.26), 21px);
   padding: 0 4px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.16);
-  color: var(--cd-text);
-  font-weight: 800;
-  text-align: center;
+  border-radius: 10px;
+  background: #fdfbf4;
+  color: #1b2430;
+  font-size: clamp(10px, calc(var(--cd-cw) * 0.16), 12px);
+  font-weight: 900;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
   font-variant-numeric: tabular-nums;
 }
 .cd-seat.one .cd-count { background: var(--cd-gold); color: #2b1a00; }
-.cd-seat-tag { font-size: clamp(9px, calc(var(--cd-cw) * 0.13), 11px); padding: 0 4px; border-radius: 5px; background: rgba(255, 255, 255, 0.14); }
+.cd-seat.me .cd-avatar::after { content: "你"; position: absolute; top: -5px; left: -8px; padding: 0 3px; border-radius: 6px; background: #fff; color: #1b2430; font-size: 9px; font-weight: 800; line-height: 1.45; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
+.cd-seat[data-role="ai"] .cd-avatar::before { content: "AI"; position: absolute; top: -5px; left: -7px; padding: 0 3px; border-radius: 5px; background: rgba(8, 18, 13, 0.88); color: #cfe3d6; font-size: 8px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.5; }
+/* 状态牌挂在头像右上角，不占行高 */
+.cd-seat-tag { position: absolute; top: -6px; right: -10px; font-size: 9px; line-height: 1.4; padding: 0 3px; border-radius: 5px; background: rgba(0, 0, 0, 0.72); color: var(--cd-text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); }
 .cd-seat-tag.warn { background: var(--cd-red); color: #fff; }
 .cd-seat-tag.skip { background: #6a3fb5; color: #fff; }
-.cd-seat-tag.bot { background: rgba(255, 255, 255, 0.12); }
-.cd-seat-tag.off { background: rgba(255, 255, 255, 0.1); color: var(--cd-muted); }
+.cd-seat-tag.off { background: rgba(0, 0, 0, 0.6); color: var(--cd-muted); }
+
+/* 自己的头像固定在操作条左侧，像斗地主的自己那一席 */
+.cd-me { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); }
+.cd-me .cd-seat { min-width: 0; max-width: none; }
+.cd-me .cd-seat-name { display: none; }
 
 .cd-center { position: relative; display: flex; align-items: center; justify-content: center; gap: calc(var(--cd-cw) * 0.4); min-height: 0; min-width: 0; }
 .cd-draw {
@@ -269,6 +322,11 @@ button { font: inherit; }
 .cd-card:focus { outline: none; }
 .cd-card:focus-visible { outline: 3px solid var(--cd-gold); outline-offset: 2px; }
 
+/* 飞牌：出牌从人头像飞向弃牌堆，摸牌从牌堆飞向本人 */
+.cd-fly { position: absolute; left: 0; top: 0; z-index: 60; pointer-events: none; box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5); }
+.cd-fly-back { background: linear-gradient(160deg, #2b3a44, #0d151a); }
+.cd-fly-back::after { content: "变"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--cd-gold); font-weight: 900; font-size: calc(var(--cd-cw) * 0.3); }
+
 /* ---------- 手牌与动作 ---------- */
 .cd-hand-wrap { position: relative; min-width: 0; min-height: calc(var(--cd-ch) + 18px); }
 .cd-hand {
@@ -292,7 +350,7 @@ button { font: inherit; }
 .cd-hand .cd-card:first-child { margin-left: 0; }
 .cd-hand-empty { align-self: center; color: var(--cd-muted); font-size: 12px; padding: 20px; }
 
-.cd-actions { display: flex; gap: 6px; align-items: stretch; flex-wrap: wrap; justify-content: center; min-width: 0; padding: 0 2px 2px; }
+.cd-actions { position: relative; display: flex; gap: 6px; align-items: stretch; flex-wrap: wrap; justify-content: center; min-width: 0; padding: 0 2px 2px; }
 .cd-btn {
   flex: 0 0 auto;
   min-width: 84px;

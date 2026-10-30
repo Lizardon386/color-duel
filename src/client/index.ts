@@ -17,6 +17,7 @@ interface Refs {
   logBtn: HTMLButtonElement;
   soundBtn: HTMLButtonElement;
   seats: HTMLElement;
+  me: HTMLElement;
   draw: HTMLButtonElement;
   drawCount: HTMLElement;
   discard: HTMLElement;
@@ -49,6 +50,10 @@ let lastMyCount = 0;
 let lastPending = 0;
 let lastWinner: string | null = null;
 let handCount = 0;
+let flyActor: string | null = null;
+let pendingLanding: HTMLElement | null = null;
+let drawFlights: Array<{ seatId: string; count: number }> = [];
+const lastCounts = new Map<string, number>();
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -132,6 +137,7 @@ function build(host: HTMLElement): void {
   handWrap.append(hand);
 
   const actionBar = el('div', 'cd-actions');
+  const meSlot = el('div', 'cd-me');
   const actDraw = el('button', 'cd-btn primary');
   const actPeng = el('button', 'cd-btn');
   const actCall = el('button', 'cd-btn danger cd-call');
@@ -145,7 +151,7 @@ function build(host: HTMLElement): void {
   actEnd.textContent = '结束回合';
   actResult.textContent = '看结果';
   actRematch.textContent = '再来一局';
-  actionBar.append(actDraw, actPeng, actCall, actEnd, actResult, actRematch);
+  actionBar.append(meSlot, actDraw, actPeng, actCall, actEnd, actResult, actRematch);
 
   const log = el('div', 'cd-log');
   log.hidden = true;
@@ -170,6 +176,7 @@ function build(host: HTMLElement): void {
     logBtn,
     soundBtn,
     seats,
+    me: meSlot,
     draw,
     drawCount,
     discard,
@@ -284,6 +291,106 @@ function toast(text: string, warn = false): void {
   window.setTimeout(() => node.remove(), 2200);
 }
 
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+function boxOf(node: Element | null | undefined): Box | null {
+  if (!node) return null;
+  const rect = node.getBoundingClientRect();
+  return { x: rect.x, y: rect.y, w: rect.width, h: rect.height };
+}
+
+/**
+ * 一张牌从 A 飞到 B。用 Web Animations，不改全局动画表；
+ * 目标是小头像时 endScale < 1，读起来像「收进手里」。
+ */
+function flyCard(
+  from: Box,
+  to: Box,
+  face: Card | null,
+  options: { delay?: number; endScale?: number; onLand?: () => void } = {},
+): void {
+  if (!refs) return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    options.onLand?.();
+    return;
+  }
+  const cw = Number.parseFloat(getComputedStyle(refs.root).getPropertyValue('--cd-cw')) || 65;
+  const ch = cw * 1.42;
+  const node = face ? createCard(face) : el('div', 'cd-card cd-fly-back');
+  node.classList.add('cd-fly');
+  node.style.width = `${cw}px`;
+  node.style.height = `${ch}px`;
+
+  const root = refs.root.getBoundingClientRect();
+  const startScale = Math.max(0.3, Math.min(1, from.w / cw));
+  const endScale = options.endScale ?? 1;
+  const x0 = from.x + from.w / 2 - cw / 2 - root.x;
+  const y0 = from.y + from.h / 2 - ch / 2 - root.y;
+  const x1 = to.x + to.w / 2 - cw / 2 - root.x;
+  const y1 = to.y + to.h / 2 - ch / 2 - root.y;
+
+  node.style.transform = `translate(${x0}px, ${y0}px) scale(${startScale})`;
+  refs.root.append(node);
+  const animation = node.animate(
+    [
+      { transform: `translate(${x0}px, ${y0}px) scale(${startScale})`, opacity: 0.85 },
+      { transform: `translate(${x1}px, ${y1}px) scale(${endScale})`, opacity: endScale < 1 ? 0.15 : 1 },
+    ],
+    { duration: 260, delay: options.delay ?? 0, easing: 'cubic-bezier(0.2, 0.75, 0.25, 1)', fill: 'forwards' },
+  );
+  const done = () => {
+    node.remove();
+    options.onLand?.();
+  };
+  animation.onfinish = done;
+  animation.oncancel = done;
+}
+
+/** 出牌：从出牌者头像飞到弃牌堆，落地后再显示牌面；摸牌：从牌堆飞向本人。 */
+function playFlights(current: ClientView, me: PlayerView | undefined): void {
+  if (!refs) return;
+  if (flyActor) {
+    const actor = flyActor;
+    flyActor = null;
+    const seatEl = actor === me?.seatId ? refs.me : refs.seats.querySelector(`[data-seat="${actor}"]`);
+    const from = boxOf(seatEl?.querySelector('.cd-avatar'));
+    const to = boxOf(refs.discard);
+    const landing = pendingLanding;
+    pendingLanding = null;
+    if (from && to && current.topCard) {
+      flyCard(from, to, current.topCard, {
+        onLand: () => {
+          if (landing) landing.style.visibility = '';
+        },
+      });
+    } else if (landing) {
+      landing.style.visibility = '';
+    }
+  }
+
+  if (drawFlights.length) {
+    const deck = boxOf(refs.draw);
+    if (deck) {
+      let step = 0;
+      for (const item of drawFlights) {
+        const seatEl = item.seatId === me?.seatId ? refs.me : refs.seats.querySelector(`[data-seat="${item.seatId}"]`);
+        const target = item.seatId === me?.seatId ? boxOf(refs.hand) : boxOf(seatEl?.querySelector('.cd-avatar'));
+        if (!target) continue;
+        for (let i = 0; i < item.count; i++) {
+          flyCard(deck, target, null, { delay: step * 55, endScale: 0.5 });
+          step += 1;
+        }
+      }
+    }
+    drawFlights = [];
+  }
+}
+
 function render(current: ClientView): void {
   if (!refs) return;
   const me = meOf(current);
@@ -293,7 +400,6 @@ function render(current: ClientView): void {
   const facingPenalty = Boolean(myTurn && current.pendingDraw > 0 && !current.canStackNow);
 
   detect(current, me);
-
   refs.turnChip.textContent = '';
   if (current.phase === 'ended') {
     const winner = current.players.find((player) => player.seatId === current.winner);
@@ -321,14 +427,17 @@ function render(current: ClientView): void {
   renderHand(current, me, myTurn);
   renderActions(current, me, myTurn, hasPlayable, facingPenalty);
   renderLog(current);
+  playFlights(current, me);
   dialogs?.sync(current, me, spectator);
 }
 
 function detect(current: ClientView, me: PlayerView | undefined): void {
   const topId = current.topCard?.id ?? '';
-  if (lastTopId && topId && topId !== lastTopId) {
+  const topChanged = Boolean(lastTopId && topId && topId !== lastTopId);
+  if (topChanged) {
     if (current.pendingDraw > lastPending || (current.topCard && isBlack(current.topCard))) sfx.chain();
     else sfx.play();
+    flyActor = lastTurn;
   }
   if (me && lastMyCount && me.cardCount > lastMyCount) sfx.draw();
   if (current.currentSeatId !== lastTurn && current.currentSeatId === me?.seatId) sfx.turn();
@@ -336,6 +445,18 @@ function detect(current: ClientView, me: PlayerView | undefined): void {
     if (current.winner === me?.seatId) sfx.win();
     else sfx.lose();
   }
+
+  // 张数变多 = 摸牌；重新开局（ended → playing）不逐张飞
+  const freshDeal = lastPhase === 'ended' && current.phase === 'playing';
+  drawFlights = [];
+  for (const player of current.players) {
+    const prev = lastCounts.get(player.seatId);
+    if (!freshDeal && prev !== undefined && player.cardCount > prev && !topChanged) {
+      drawFlights.push({ seatId: player.seatId, count: Math.min(3, player.cardCount - prev) });
+    }
+    lastCounts.set(player.seatId, player.cardCount);
+  }
+
   lastTopId = topId;
   lastTurn = current.currentSeatId;
   lastPhase = current.phase;
@@ -358,44 +479,78 @@ const SEAT_COLOR_HEX: Record<string, string> = {
   blue: '#3b82f6',
 };
 
+const AVATAR_PATTERNS = ['plain', 'dot', 'stripe', 'check', 'ring', 'ray', 'cross'];
+
+/** 座位花纹：优先用平台下发的 seatOptions，没有就按昵称散列一个，保证不重样。 */
+function avatarOf(player: PlayerView): string {
+  const raw = player.options?.avatar;
+  if (raw && AVATAR_PATTERNS.includes(raw)) return raw;
+  let hash = 0;
+  for (const ch of player.name) hash = (hash * 31 + (ch.codePointAt(0) ?? 0)) % 9973;
+  return AVATAR_PATTERNS[hash % AVATAR_PATTERNS.length]!;
+}
+
 function renderSeats(current: ClientView, me: PlayerView | undefined): void {
   if (!refs) return;
-  refs.seats.replaceChildren();
-  for (const player of current.players) {
-    const seat = el('div', 'cd-seat');
-    if (player.seatId === current.currentSeatId && current.phase === 'playing') seat.classList.add('active');
-    if (player.seatId === me?.seatId) seat.classList.add('me');
-    if (player.role !== 'ai' && !player.connected) seat.classList.add('offline');
-    if (player.cardCount === 1) seat.classList.add('one');
+  const seatsEl = refs.seats;
+  const meEl = refs.me;
+  seatsEl.replaceChildren();
+  meEl.replaceChildren();
 
-    const color = player.options?.color;
-    if (color) seat.style.setProperty('--cd-seat-color', SEAT_COLOR_HEX[color] ?? colorValue(color));
+  const others = current.players.filter((player) => player.seatId !== me?.seatId);
+  others.forEach((player, index) => {
+    const seat = buildSeat(player, current, false);
+    // 上半环：中间最高、两端落回两侧，像围着牌桌坐
+    const t = others.length > 1 ? (index + 1) / (others.length + 1) : 0.5;
+    seat.style.setProperty('--cd-lift', `${(-10 * Math.sin(Math.PI * t)).toFixed(1)}px`);
+    seatsEl.append(seat);
+  });
 
-    const name = el('span', 'cd-seat-name');
-    name.textContent = player.name;
-    const meta = el('div', 'cd-seat-meta');
-    const count = el('span', 'cd-count');
-    count.textContent = String(player.cardCount);
-    meta.append(count);
+  const mine = current.players.find((player) => player.seatId === me?.seatId);
+  if (mine) meEl.append(buildSeat(mine, current, true));
+}
 
-    // 对手手牌用小牌背表示，比单纯一个数字更像牌桌
-    const fan = el('span', 'cd-seat-fan');
-    const backs = Math.min(player.cardCount, 6);
-    for (let i = 0; i < backs; i++) fan.append(el('i', 'cd-back'));
+function buildSeat(player: PlayerView, current: ClientView, isMe: boolean): HTMLElement {
+  const seat = el('div', 'cd-seat');
+  if (player.seatId === current.currentSeatId && current.phase === 'playing') seat.classList.add('active');
+  if (isMe) seat.classList.add('me');
+  if (player.role !== 'ai' && !player.connected) seat.classList.add('offline');
+  if (player.cardCount === 1) seat.classList.add('one');
 
-    const skip = (current.skipQueue ?? []).includes(player.seatId);
-    if (player.mustCall && !player.calledLast && player.cardCount === 1) {
-      meta.append(tag('未报牌', 'warn'));
-    } else if (skip) {
-      meta.append(tag('被跳过', 'skip'));
-    } else if (player.role === 'ai') {
-      meta.append(tag('电脑', 'bot'));
-    } else if (!player.connected) {
-      meta.append(tag('离线', 'off'));
-    }
-    seat.append(fan, name, meta);
-    refs.seats.append(seat);
+  const color = player.options?.color;
+  if (color) {
+    seat.style.setProperty('--cd-seat-color', SEAT_COLOR_HEX[color] ?? colorValue(color));
+    seat.dataset.color = color;
   }
+  seat.dataset.role = player.role;
+  seat.dataset.avatar = avatarOf(player);
+  seat.dataset.seat = player.seatId;
+
+  // 头像取昵称首字，电脑另有「AI」角标
+  const avatar = el('div', 'cd-avatar');
+  const pattern = el('span', 'cd-avatar-pattern');
+  const face = el('span', 'cd-avatar-face');
+  face.textContent = [...player.name][0] ?? '?';
+  const count = el('span', 'cd-count');
+  count.textContent = String(player.cardCount);
+  avatar.append(pattern, face, count);
+
+  const name = el('span', 'cd-seat-name');
+  name.textContent = player.name;
+
+  const skip = (current.skipQueue ?? []).includes(player.seatId);
+  let status: HTMLElement | null = null;
+  if (player.mustCall && !player.calledLast && player.cardCount === 1) {
+    status = tag('未报', 'warn');
+  } else if (skip) {
+    status = tag('跳过', 'skip');
+  } else if (player.role !== 'ai' && !player.connected) {
+    status = tag('离线', 'off');
+  }
+
+  seat.append(avatar, name);
+  if (status) seat.append(status);
+  return seat;
 }
 
 function tag(text: string, kind: string): HTMLElement {
@@ -434,6 +589,10 @@ function renderCenter(
     if (top) {
       const card = createCard(top);
       card.classList.add('pop');
+      if (flyActor) {
+        card.style.visibility = 'hidden';
+        pendingLanding = card;
+      }
       refs.discard.append(card);
       if (isBlack(top)) {
         const ring = el('div', 'cd-ring');
@@ -603,6 +762,10 @@ function teardown(): void {
   lastMyCount = 0;
   lastPending = 0;
   lastWinner = null;
+  flyActor = null;
+  pendingLanding = null;
+  drawFlights = [];
+  lastCounts.clear();
 }
 
 const client = {

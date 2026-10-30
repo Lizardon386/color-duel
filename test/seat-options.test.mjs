@@ -4,6 +4,7 @@ import { parseSeatOptions } from '@lizardon386/game-sdk';
 import colorDuel from '../dist-ts/server/index.js';
 import {
   SEAT_OPTIONS,
+  defaultSeatAvatar,
   defaultSeatColor,
   normalizeSeatOptions,
   seatDifficulty,
@@ -26,20 +27,36 @@ test('seatOptions 声明通过 SDK 校验，字段角色正确', () => {
     color.options.map((option) => option.color),
     ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6'],
   );
+
+  const avatar = SEAT_OPTIONS.fields.find((field) => field.key === 'avatar');
+  assert.deepEqual(avatar.roles, ['host', 'player', 'ai']);
+  assert.equal(avatar.options.length, 7);
+  assert.equal(avatar.options[0].value, 'plain');
 });
 
-test('normalizeSeatOptions：按槽位循环默认色，AI 默认 easy，非法值回落', () => {
-  assert.deepEqual(normalizeSeatOptions('host', 1, undefined), { color: 'red' });
-  assert.deepEqual(normalizeSeatOptions('player', 2, undefined), { color: 'yellow' });
-  assert.deepEqual(normalizeSeatOptions('ai', 3, undefined), { difficulty: 'easy', color: 'green' });
-  assert.deepEqual(normalizeSeatOptions('ai', 4, { difficulty: 'cold', color: 'blue' }), { difficulty: 'cold', color: 'blue' });
-  assert.deepEqual(normalizeSeatOptions('host', 5, { color: 'blue' }), { color: 'blue' });
-  assert.deepEqual(normalizeSeatOptions('ai', 6, { difficulty: 'bogus', color: 'bogus' }), { difficulty: 'easy', color: 'yellow' });
+test('normalizeSeatOptions：按槽位循环默认色/花纹，AI 默认 easy，非法值回落', () => {
+  assert.deepEqual(normalizeSeatOptions('host', 1, undefined), { color: 'red', avatar: 'plain' });
+  assert.deepEqual(normalizeSeatOptions('player', 2, undefined), { color: 'yellow', avatar: 'dot' });
+  assert.deepEqual(normalizeSeatOptions('ai', 3, undefined), { difficulty: 'easy', color: 'green', avatar: 'stripe' });
+  assert.deepEqual(normalizeSeatOptions('ai', 4, { difficulty: 'cold', color: 'blue', avatar: 'cross' }), {
+    difficulty: 'cold',
+    color: 'blue',
+    avatar: 'cross',
+  });
+  assert.deepEqual(normalizeSeatOptions('host', 5, { color: 'blue' }), { color: 'blue', avatar: 'ring' });
+  assert.deepEqual(normalizeSeatOptions('ai', 6, { difficulty: 'bogus', color: 'bogus', avatar: 'bogus' }), {
+    difficulty: 'easy',
+    color: 'yellow',
+    avatar: 'ray',
+  });
   assert.deepEqual(normalizeSeatOptions('spectator', 901, { difficulty: 'cold', color: 'blue' }), {});
   assert.equal(defaultSeatColor(0), 'red');
   assert.equal(defaultSeatColor(1), 'red');
   assert.equal(defaultSeatColor(4), 'blue');
   assert.equal(defaultSeatColor(5), 'red');
+  assert.equal(defaultSeatAvatar(1), 'plain');
+  assert.equal(defaultSeatAvatar(8), 'plain');
+  assert.equal(defaultSeatAvatar(3), 'stripe');
 });
 
 test('serialize 带出每座颜色/难度，resume 后仍保留', () => {
@@ -52,16 +69,16 @@ test('serialize 带出每座颜色/难度，resume 后仍保留', () => {
 
   const view = setup.game.serialize('s1');
   const options = Object.fromEntries(view.players.map((player) => [player.seatId, player.options]));
-  assert.deepEqual(options.s1, { color: 'red' });
-  assert.deepEqual(options.s2, { color: 'yellow' });
-  assert.deepEqual(options.s3, { color: 'blue', difficulty: 'cold' });
+  assert.deepEqual(options.s1, { color: 'red', avatar: 'plain' });
+  assert.deepEqual(options.s2, { color: 'yellow', avatar: 'dot' });
+  assert.deepEqual(options.s3, { color: 'blue', difficulty: 'cold', avatar: 'stripe' });
   assert.equal(view.rules.difficulty, undefined);
 
   const snap = setup.game.snapshot();
   const resumed = colorDuel.resume(snap, setup.ctx);
   const resumedView = resumed.serialize('s1');
   const resumedOptions = Object.fromEntries(resumedView.players.map((player) => [player.seatId, player.options]));
-  assert.deepEqual(resumedOptions.s3, { color: 'blue', difficulty: 'cold' });
+  assert.deepEqual(resumedOptions.s3, { color: 'blue', difficulty: 'cold', avatar: 'stripe' });
 });
 
 function calledLastAfterTick(difficulty) {
