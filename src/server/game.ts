@@ -915,11 +915,11 @@ export class ColorDuel implements GameInstance {
   private seatOptionsFor(seatId: string): Record<string, unknown> {
     const seat = this.ctx.seat(seatId);
     if (!seat) return {};
-    return normalizeSeatOptions(seat.role, seat.slot, seat.options);
+    return normalizeSeatOptions(seat.role, seat.slot, seat.options ?? {});
   }
 
   private botDifficulty(seatId: string): Difficulty {
-    return seatDifficulty(this.ctx.seat(seatId)?.options);
+    return seatDifficulty(this.ctx.seat(seatId)?.options ?? {});
   }
 
   private botState(): BotState {

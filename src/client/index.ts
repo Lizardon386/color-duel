@@ -309,6 +309,13 @@ function colorValue(color: string): string {
   );
 }
 
+const SEAT_COLOR_HEX: Record<string, string> = {
+  red: '#ef4444',
+  yellow: '#f59e0b',
+  green: '#22c55e',
+  blue: '#3b82f6',
+};
+
 function renderSeats(current: ClientView, me: PlayerView | undefined): void {
   if (!refs) return;
   refs.seats.replaceChildren();
@@ -322,7 +329,7 @@ function renderSeats(current: ClientView, me: PlayerView | undefined): void {
     const color = player.options?.color;
     if (color) {
       const dot = el('span', 'cd-seat-color');
-      dot.style.background = colorValue(color);
+      dot.style.background = SEAT_COLOR_HEX[color] ?? colorValue(color);
       dot.setAttribute('aria-hidden', 'true');
       seat.append(dot);
     }

@@ -1,7 +1,7 @@
 # color-duel（变色对决）· 上下文与进展
 
 > 交接卡：当前状态、下一步、坑与验证命令。
-> 最近更新：2026-10-30　模式：三档（README / DESIGN / CONTEXT）　锚点：`e61d256`（main，已推 origin；本次交接提交在其后）
+> 最近更新：2026-10-30　模式：三档（README / DESIGN / CONTEXT）　锚点：`72f0c17`（main，未推送；本次交接提交在其后）
 
 ## 1. 文档目录
 
@@ -20,8 +20,8 @@
 ## 3. 现在在哪
 
 - **代码与平台联调完成。** 规则层、状态机、机器人、客户端、规则资料与 rule-config 声明已实现并验证。
-- `npm test` **37/37**；`npm run build` 生成 `dist/color-duel.bpmap`（103,821 字节，SHA256 `d402ae78ae320d35227b54811fae6865ba4d001b37f888e388b6db41dbb0e0f4`，本地新包）；`bpmap doctor dist-pack` 与 `--host` 通过。平台 `games/` 已还原为 v0.1.0 旧包（`b85db751…`）。
-- **座位级选项已接**（SDK 0.4.0 本地 link）：`seatOptions` 声明 `difficulty`（仅 ai，easy/normal/cold，默认 normal）与 `color`（host/player/ai，红黄绿蓝）；`normalizeSeatOptions` 按角色收口、按 slot 循环默认色、非法值回落；AI 逐座读 `options.difficulty`，服务端 serialize 带每座 `options`，客户端座位条画色点；全局 `ruleConfig.difficulty` 已删除。UI 房 BSUM 设色/难度并开局，重启房 MCMQ 恢复 options 后继续。
+- `npm test` **37/37**；`npm run build` 生成 `dist/color-duel.bpmap`（104,016 字节，SHA256 `0ccf96f997568f3b8e91208262f31d219518feea736882a2c5d3ad4888c68ae5`，本地新包）；`bpmap doctor dist-pack` 与 `--host` 通过。平台 `games/` 已还原为 v0.1.0 旧包（`b85db751…`）。
+- **座位级选项已接**（SDK 0.4.0 本地 link）：`seatOptions` 声明 `difficulty`（仅 ai，easy/normal/cold，默认 normal）与 `color`（host/player/ai；#ef4444 / #f59e0b / #22c55e / #3b82f6）；`normalizeSeatOptions` 先按角色给默认（AI normal、颜色按 slot 轮转）再用合法的 raw 覆盖；AI 逐座读 `options.difficulty`，服务端 serialize 带每座 `options`，客户端座位条画色点；全局 `ruleConfig.difficulty` 已删除。UI 房 BSUM 设色/难度并开局，重启房 MCMQ 恢复 options 后继续（行为验证在色板调整前完成，色板只影响展示）。
 - SDK 0.3.0 **已发 npm**（四包 `latest` 均 0.3.0；tag `sdk-v0.3.0` + GitHub Release 已建）；本仓库 `@lizardon386/game-sdk` / `sdk-tools` 仍是 `^0.3.0`，lock 指向 registry，提交 `1a78b9e`。座位选项需要 SDK 0.4.0（平台 `c326314`），当前只在本机 link，未改 package.json/lock。
 - 平台侧（3178 仓库，216/216）：房间内「本局规则」卡（`ruleConfig` 命令，仅房主、仅 lobby）、资料懒加载、单入口壳；平台交接卡在 `130c568`。
 - **联调 PASS**：协议级（房间 4NTW）改规则后 `rulesHash` 变化、ready 重置、广播、中途 `seatResume`、rematch 7/7；UI（ZYT7）房主编辑/玩家只读、规则同步、开局、资料、刷新坐回；重启恢复（FFZ9）config/hash/手牌恢复后继续出牌。初版包在平台 `games/color-duel.bpmap` 留了一份。
@@ -90,7 +90,7 @@ npx bpmap doctor dist-pack --host http://127.0.0.1:3178
 
 ## 8. 交接记录
 
-- 2026-10-30 Qoder：**座位级选项**：`difficulty`（仅 ai）+ `color`（host/player/ai，红黄绿蓝）；AI 逐座难度，serialize 带每座 options，客户端座位画色点；全局 `config.difficulty` 删除；37/37；UI BSUM 设置/开局、重启 MCMQ 恢复 options；新包 `d402ae78…`（103,821B），仅本地 link 0.4.0，未发布/未推送。
+- 2026-10-30 Qoder：**座位级选项**：`difficulty`（仅 ai）+ `color`（host/player/ai；#ef4444/#f59e0b/#22c55e/#3b82f6）；normalize 先按角色给默认（AI normal、颜色按 slot 轮转）再用合法 raw 覆盖；AI 逐座难度，serialize 带 options，客户端座位画色点；全局 `config.difficulty` 删除；37/37；UI BSUM/重启 MCMQ 联调过；新包 `0ccf96f9…`（104,016B），仅本地 link 0.4.0，未发布/未推送。
 - 2026-10-29 Qoder：**v0.1.0 发布**：tag `v0.1.0`（指向 `e61d256`）+ GitHub Release，附 `color-duel.bpmap`（SHA256 `b85db751…`）；CI 绿。
 - 2026-10-29 Qoder：**公开仓库与 README**：创建 `Lizardon386/color-duel` 并推 `main`（`65c0dcf`），CI run 40842602844 绿；README 统一标题、去掉 No Mercy、新增「运行平台与依赖」小节（`efccf78`，CI 40842888001 绿）；用户暂不自测，`v0.1.0` tag 待定。
 - 2026-10-29 Qoder：**SDK 0.3.0 正式依赖**：四包已发 npm（latest，tag `sdk-v0.3.0` + Release）；`game-sdk` / `sdk-tools` 切 `^0.3.0`，lock 指向 registry；`npm test` 33/33、构建、doctor（含 `--host`）通过；包哈希不变 `b85db751…`；提交 `1a78b9e`。

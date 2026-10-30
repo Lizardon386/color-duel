@@ -20,7 +20,10 @@ test('seatOptions 声明通过 SDK 校验，字段角色正确', () => {
   assert.equal(difficulty.default, 'normal');
   const color = SEAT_OPTIONS.fields.find((field) => field.key === 'color');
   assert.deepEqual(color.roles, ['host', 'player', 'ai']);
-  assert.ok(color.options.every((option) => typeof option.color === 'string' && option.color.startsWith('#')));
+  assert.deepEqual(
+    color.options.map((option) => option.color),
+    ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6'],
+  );
 });
 
 test('normalizeSeatOptions：按槽位循环默认色，AI 默认 normal，非法值回落', () => {
@@ -31,6 +34,7 @@ test('normalizeSeatOptions：按槽位循环默认色，AI 默认 normal，非�
   assert.deepEqual(normalizeSeatOptions('host', 5, { color: 'blue' }), { color: 'blue' });
   assert.deepEqual(normalizeSeatOptions('ai', 6, { difficulty: 'bogus', color: 'bogus' }), { difficulty: 'normal', color: 'yellow' });
   assert.deepEqual(normalizeSeatOptions('spectator', 901, { difficulty: 'cold', color: 'blue' }), {});
+  assert.equal(defaultSeatColor(0), 'red');
   assert.equal(defaultSeatColor(1), 'red');
   assert.equal(defaultSeatColor(4), 'blue');
   assert.equal(defaultSeatColor(5), 'red');

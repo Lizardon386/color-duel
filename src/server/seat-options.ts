@@ -5,10 +5,10 @@ export const SEAT_COLORS = ['red', 'yellow', 'green', 'blue'] as const;
 export type SeatColor = (typeof SEAT_COLORS)[number];
 
 const COLOR_HEX: Record<SeatColor, string> = {
-  red: '#d64545',
-  yellow: '#e0b02a',
-  green: '#2f9e57',
-  blue: '#2f6fd0',
+  red: '#ef4444',
+  yellow: '#f59e0b',
+  green: '#22c55e',
+  blue: '#3b82f6',
 };
 
 export const SEAT_OPTIONS: SeatOptionsSpec = {
@@ -52,19 +52,21 @@ export function isDifficulty(value: unknown): value is Difficulty {
 }
 
 export function defaultSeatColor(slot: number): SeatColor {
-  const index = ((slot - 1) % SEAT_COLORS.length + SEAT_COLORS.length) % SEAT_COLORS.length;
+  const index = (Math.max(1, slot) - 1) % SEAT_COLORS.length;
   return SEAT_COLORS[index]!;
 }
 
-/** 平台建座与改选项都会调用；返回的字段就是该座位生效的 options。 */
+/** 平台建座与改选项都会调用；先按角色给默认值，再用合法的 raw 覆盖。 */
 export function normalizeSeatOptions(
   role: SeatRole,
   slot: number,
   raw: Record<string, unknown> | undefined,
 ): Record<string, unknown> {
   const options: Record<string, unknown> = {};
-  if (role === 'ai') options.difficulty = isDifficulty(raw?.difficulty) ? raw.difficulty : 'normal';
-  if (role !== 'spectator') options.color = isSeatColor(raw?.color) ? raw.color : defaultSeatColor(slot);
+  if (role === 'ai') options.difficulty = 'normal';
+  if (role !== 'spectator') options.color = defaultSeatColor(slot);
+  if (role === 'ai' && isDifficulty(raw?.difficulty)) options.difficulty = raw.difficulty;
+  if (role !== 'spectator' && isSeatColor(raw?.color)) options.color = raw.color;
   return options;
 }
 
