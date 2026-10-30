@@ -76,6 +76,7 @@ button { font: inherit; }
 .cd-main { position: relative; min-height: 0; display: grid; grid-template-rows: auto 1fr; gap: 2px; }
 .cd-seats { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; padding: 2px 0; }
 .cd-seat {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -90,6 +91,7 @@ button { font: inherit; }
   transition: box-shadow 0.2s, background 0.2s, opacity 0.2s;
 }
 .cd-seat.active { border-color: var(--cd-gold); background: rgba(242, 193, 78, 0.18); box-shadow: 0 0 0 2px rgba(242, 193, 78, 0.55); }
+.cd-seat-color { position: absolute; top: 3px; left: 4px; width: 7px; height: 7px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
 .cd-seat.offline { opacity: 0.5; }
 .cd-seat.me { border-style: dashed; }
 .cd-seat-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }

@@ -12,6 +12,7 @@ export interface PlayerView {
   role: 'host' | 'player' | 'ai' | 'spectator';
   cardCount: number;
   connected: boolean;
+  options: { color?: string; difficulty?: string };
   calledLast: boolean;
   mustCall: boolean;
   callDeadlineInMs: number | null;
@@ -35,7 +36,6 @@ export interface ClientView {
     peng: boolean;
     cap: number;
     noTurnTimer: boolean;
-    difficulty?: string;
   };
   cap: number;
   activeColor: Color;

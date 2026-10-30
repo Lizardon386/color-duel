@@ -1,6 +1,7 @@
 import { stableDigest, type GameModule, type RuleConfigSpec } from '@lizardon386/game-sdk';
 import { normalizeConfig, type ColorDuelConfig } from './config.js';
 import { ColorDuel, type ColorDuelSnapshot } from './game.js';
+import { SEAT_OPTIONS, normalizeSeatOptions } from './seat-options.js';
 
 export const GAME_ID = 'color-duel';
 export const GAME_NAME = '变色对决';
@@ -56,18 +57,6 @@ export const RULE_CONFIG: RuleConfigSpec = {
       ],
     },
     {
-      key: 'difficulty',
-      type: 'enum',
-      label: '电脑强度',
-      description: '仅对电脑位生效。简单会漏报牌、不压罚；中等会接龙与报牌；冷酷算牌、能碰必碰。',
-      default: 'normal',
-      options: [
-        { value: 'easy', label: '简单' },
-        { value: 'normal', label: '中等' },
-        { value: 'cold', label: '冷酷' },
-      ],
-    },
-    {
       key: 'no-turn-timer',
       type: 'boolean',
       label: '关闭出牌倒计时',
@@ -79,6 +68,8 @@ export const RULE_CONFIG: RuleConfigSpec = {
 
 export const colorDuel: GameModule = {
   ruleConfig: RULE_CONFIG,
+  seatOptions: SEAT_OPTIONS,
+  normalizeSeatOptions,
   reference: { entry: 'reference.json' },
   id: GAME_ID,
   name: GAME_NAME,

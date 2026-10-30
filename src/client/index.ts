@@ -319,6 +319,14 @@ function renderSeats(current: ClientView, me: PlayerView | undefined): void {
     if (player.role !== 'ai' && !player.connected) seat.classList.add('offline');
     if (player.cardCount === 1) seat.classList.add('one');
 
+    const color = player.options?.color;
+    if (color) {
+      const dot = el('span', 'cd-seat-color');
+      dot.style.background = colorValue(color);
+      dot.setAttribute('aria-hidden', 'true');
+      seat.append(dot);
+    }
+
     const name = el('span', 'cd-seat-name');
     name.textContent = player.name;
     const meta = el('div', 'cd-seat-meta');

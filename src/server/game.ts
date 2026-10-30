@@ -23,6 +23,7 @@ import {
   type Color,
 } from './rules.js';
 import { decideBotAction, type BotAction, type BotState, type Difficulty } from './bots.js';
+import { normalizeSeatOptions, seatDifficulty } from './seat-options.js';
 
 const HAND_SIZE = 7;
 const SNAPSHOT_VERSION = 1;
@@ -68,7 +69,6 @@ export interface ColorDuelSnapshot {
 export class ColorDuel implements GameInstance {
   private readonly ctx: GameContext;
   private readonly config: ColorDuelConfig;
-  private readonly difficulty: Difficulty;
 
   private players: PlayerState[] = [];
   private state: 'playing' | 'ended' = 'playing';
@@ -91,7 +91,6 @@ export class ColorDuel implements GameInstance {
   constructor(config: ColorDuelConfig, ctx: GameContext, saved?: ColorDuelSnapshot) {
     this.ctx = ctx;
     this.config = config;
-    this.difficulty = (config as ColorDuelConfig & { difficulty?: Difficulty }).difficulty ?? 'normal';
     if (saved && saved.version === SNAPSHOT_VERSION) {
       this.restore(saved);
     } else {
@@ -204,6 +203,7 @@ export class ColorDuel implements GameInstance {
         role: this.ctx.seat(player.seatId)?.role ?? 'player',
         cardCount: player.hand.length,
         connected: this.ctx.seat(player.seatId)?.connected ?? false,
+        options: this.seatOptionsFor(player.seatId),
         calledLast: player.calledLast,
         mustCall: player.mustCall,
         callDeadlineInMs: player.mustCall && player.callDeadline ? Math.max(0, player.callDeadline - now) : null,
@@ -852,7 +852,7 @@ export class ColorDuel implements GameInstance {
         this.botDueAt.delete(player.seatId);
         continue;
       }
-      const action = decideBotAction(this.botState(), player, this.difficulty, () => this.ctx.random());
+      const action = decideBotAction(this.botState(), player, this.botDifficulty(player.seatId), () => this.ctx.random());
       this.botDueAt.delete(player.seatId);
       if (!action) {
         this.botDueAt.set(player.seatId, now + TIMING.botDelayMs);
@@ -910,6 +910,16 @@ export class ColorDuel implements GameInstance {
     if (this.challenge?.victimId === player.seatId) return true;
     if (player.mustCall && !player.calledLast) return true;
     return this.currentPlayer()?.seatId === player.seatId;
+  }
+
+  private seatOptionsFor(seatId: string): Record<string, unknown> {
+    const seat = this.ctx.seat(seatId);
+    if (!seat) return {};
+    return normalizeSeatOptions(seat.role, seat.slot, seat.options);
+  }
+
+  private botDifficulty(seatId: string): Difficulty {
+    return seatDifficulty(this.ctx.seat(seatId)?.options);
   }
 
   private botState(): BotState {

@@ -1,4 +1,5 @@
 import { normalizeConfig } from '../dist-ts/server/config.js';
+import { normalizeSeatOptions } from '../dist-ts/server/seat-options.js';
 import colorDuel from '../dist-ts/server/index.js';
 
 export const C = (id, color, value) => ({ id, color, value });
@@ -23,6 +24,7 @@ export function makeSeats(roles) {
     team: null,
     ready: true,
     connected: role !== 'ai',
+    options: normalizeSeatOptions(role, index + 1, undefined),
   }));
 }
 

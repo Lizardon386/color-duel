@@ -105,9 +105,8 @@ test('rule-config 声明能通过 SDK 校验，默认值能落成合法配置', 
   const config = normalizeConfig(raw);
   assert.equal(config.stack, true);
   assert.equal(config.cap, 20);
-  assert.equal(config.difficulty, 'normal');
+  assert.equal('difficulty' in config, false);
   assert.equal(normalizeConfig({ cap: '40' }).cap, 40);
-  assert.equal(normalizeConfig({ difficulty: 'cold' }).difficulty, 'cold');
 });
 
 test('模块版本与 package.json 一致', () => {
