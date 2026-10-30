@@ -65,7 +65,7 @@
 ## 6. 验证命令
 
 ```bash
-npm test                 # 33 例
+npm test                 # 37 例
 npm run build            # dist-pack/ + dist/color-duel.bpmap
 npx bpmap doctor dist-pack --host http://127.0.0.1:3178
 ```
