@@ -8,6 +8,24 @@ import type { Card, ClientView, PlayerView, RevealPayload } from './types.js';
 const PENALTY: Record<string, number> = { draw2: 2, wild4: 4, wild6: 6, wild10: 10 };
 const CHANGERS = ['wild', 'wild4', 'wild6', 'wild10'];
 
+/** 出牌气泡：数字牌就报点数，功能牌报效果，让人不读日志也知道发生了什么。 */
+const ACTION_TEXT: Record<string, string> = {
+  skip: '跳过',
+  reverse: '反转',
+  draw2: '+2',
+  wild: '换色',
+  wild4: '+4',
+  wild6: '+6',
+  wild10: '+10',
+  skipall: '全跳',
+  flush: '弃色',
+};
+
+function actionTextOf(card: Card | null): string {
+  if (!card) return '出牌';
+  return ACTION_TEXT[card.value] ?? card.value;
+}
+
 interface Refs {
   root: HTMLElement;
   turnChip: HTMLElement;
@@ -18,6 +36,7 @@ interface Refs {
   soundBtn: HTMLButtonElement;
   seats: HTMLElement;
   me: HTMLElement;
+  dirRing: HTMLElement;
   draw: HTMLButtonElement;
   drawCount: HTMLElement;
   discard: HTMLElement;
@@ -53,6 +72,9 @@ let handCount = 0;
 let flyActor: string | null = null;
 let pendingLanding: HTMLElement | null = null;
 let drawFlights: Array<{ seatId: string; count: number }> = [];
+let bubble: { seatId: string; text: string } | null = null;
+let dirFlip = false;
+let lastDirection = 0;
 const lastCounts = new Map<string, number>();
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string): HTMLElementTagNameMap[K] {
@@ -118,6 +140,9 @@ function build(host: HTMLElement): void {
   const main = el('div', 'cd-main');
   const seats = el('div', 'cd-seats');
   const center = el('div', 'cd-center');
+  // 方向环：围着牌堆画一圈箭头，顺/逆时针一眼看出现在往哪边走
+  const dirRing = el('div', 'cd-dir-ring');
+  for (let i = 0; i < 4; i++) dirRing.append(el('i'));
   const draw = el('button', 'cd-draw');
   draw.type = 'button';
   draw.setAttribute('aria-label', '摸一张牌');
@@ -129,7 +154,7 @@ function build(host: HTMLElement): void {
   const penalty = el('span', 'cd-penalty');
   penalty.hidden = true;
   discard.append(glow, penalty);
-  center.append(draw, discard);
+  center.append(dirRing, draw, discard);
   main.append(seats, center);
 
   const handWrap = el('div', 'cd-hand-wrap');
@@ -177,6 +202,7 @@ function build(host: HTMLElement): void {
     soundBtn,
     seats,
     me: meSlot,
+    dirRing,
     draw,
     drawCount,
     discard,
@@ -351,6 +377,15 @@ function flyCard(
   animation.oncancel = done;
 }
 
+/** 出牌气泡：在头像顶上冒一下就消失，像斗地主里飘出来的那句「出牌了」。 */
+function popBubble(seatEl: Element | null, text: string): void {
+  if (!seatEl) return;
+  const node = el('div', 'cd-bubble');
+  node.textContent = text;
+  seatEl.append(node);
+  window.setTimeout(() => node.remove(), 1100);
+}
+
 /** 出牌：从出牌者头像飞到弃牌堆，落地后再显示牌面；摸牌：从牌堆飞向本人。 */
 function playFlights(current: ClientView, me: PlayerView | undefined): void {
   if (!refs) return;
@@ -362,6 +397,9 @@ function playFlights(current: ClientView, me: PlayerView | undefined): void {
     const to = boxOf(refs.discard);
     const landing = pendingLanding;
     pendingLanding = null;
+    const shout = bubble && bubble.seatId === actor ? bubble.text : null;
+    bubble = null;
+    if (shout) popBubble(seatEl, shout);
     if (from && to && current.topCard) {
       flyCard(from, to, current.topCard, {
         onLand: () => {
@@ -388,6 +426,15 @@ function playFlights(current: ClientView, me: PlayerView | undefined): void {
       }
     }
     drawFlights = [];
+  }
+
+  bubble = null;
+  if (dirFlip) {
+    dirFlip = false;
+    const ring = refs.dirRing;
+    ring.classList.remove('flip');
+    void ring.offsetWidth; // 强制重排，让连续两次反转也能重新触发动画
+    ring.classList.add('flip');
   }
 }
 
@@ -424,6 +471,8 @@ function render(current: ClientView): void {
 
   renderSeats(current, me);
   renderCenter(current, me, myTurn, hasPlayable, facingPenalty);
+  // 轮到自己时把手牌区点亮，抬一眼就知道该动了
+  refs.handWrap.classList.toggle('my-turn', myTurn);
   renderHand(current, me, myTurn);
   renderActions(current, me, myTurn, hasPlayable, facingPenalty);
   renderLog(current);
@@ -438,6 +487,7 @@ function detect(current: ClientView, me: PlayerView | undefined): void {
     if (current.pendingDraw > lastPending || (current.topCard && isBlack(current.topCard))) sfx.chain();
     else sfx.play();
     flyActor = lastTurn;
+    if (lastTurn) bubble = { seatId: lastTurn, text: actionTextOf(current.topCard) };
   }
   if (me && lastMyCount && me.cardCount > lastMyCount) sfx.draw();
   if (current.currentSeatId !== lastTurn && current.currentSeatId === me?.seatId) sfx.turn();
@@ -457,9 +507,13 @@ function detect(current: ClientView, me: PlayerView | undefined): void {
     lastCounts.set(player.seatId, player.cardCount);
   }
 
+  // 方向翻转（反转牌）时让方向环闪一下，别让人漏掉节奏变了
+  if (lastDirection !== 0 && current.direction !== lastDirection) dirFlip = true;
+
   lastTopId = topId;
   lastTurn = current.currentSeatId;
   lastPhase = current.phase;
+  lastDirection = current.direction;
   lastMyCount = me?.cardCount ?? 0;
   lastPending = current.pendingDraw;
   lastWinner = current.winner;
@@ -567,6 +621,8 @@ function renderCenter(
   facingPenalty: boolean,
 ): void {
   if (!refs) return;
+  refs.dirRing.classList.toggle('rev', current.direction === -1);
+  refs.dirRing.classList.toggle('off', current.phase !== 'playing');
   const canDraw =
     myTurn &&
     !current.challenge &&
@@ -765,6 +821,9 @@ function teardown(): void {
   flyActor = null;
   pendingLanding = null;
   drawFlights = [];
+  bubble = null;
+  dirFlip = false;
+  lastDirection = 0;
   lastCounts.clear();
 }
 

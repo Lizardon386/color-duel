@@ -177,6 +177,44 @@ button { font: inherit; }
 .cd-seat-tag.warn { background: var(--cd-red); color: #fff; }
 .cd-seat-tag.skip { background: #6a3fb5; color: #fff; }
 .cd-seat-tag.off { background: rgba(0, 0, 0, 0.6); color: var(--cd-muted); }
+/* 出牌气泡：从头像上方冒出来，1.1s 后自己飘走 */
+.cd-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  margin-left: -22px;
+  min-width: 44px;
+  padding: 1px 7px;
+  border-radius: 9px;
+  background: rgba(253, 251, 244, 0.96);
+  color: #1b2430;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.5);
+  z-index: 6;
+  pointer-events: none;
+  animation: cd-bubble-up 1.1s ease-out forwards;
+}
+.cd-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  margin-left: -4px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid rgba(253, 251, 244, 0.96);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+}
+@keyframes cd-bubble-up {
+  0% { opacity: 0; transform: translateY(7px) scale(0.78); }
+  16% { opacity: 1; transform: translateY(0) scale(1); }
+  72% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-11px) scale(0.94); }
+}
 
 /* 自己的头像固定在操作条左侧，像斗地主的自己那一席 */
 .cd-me { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); }
@@ -236,6 +274,50 @@ button { font: inherit; }
 }
 .cd-ring { position: absolute; inset: -5px; border-radius: calc(var(--cd-cw) * 0.12 + 4px); border: 3px solid var(--cd-ring, transparent); pointer-events: none; }
 @keyframes cd-pop { from { transform: scale(0.75); opacity: 0.4; } }
+
+/* ---------- 方向环（UNO 桌面感） ---------- */
+/* 围着两个牌堆画一圈箭头，顺/逆时针一眼看出牌往哪边走 */
+.cd-dir-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(74%, 250px);
+  aspect-ratio: 1.8;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+/* 逆序时整环水平镜像，箭头自然翻成逆时针 */
+.cd-dir-ring.rev { transform: translate(-50%, -50%) scaleX(-1); }
+.cd-dir-ring.off { opacity: 0.34; }
+/* 反转牌打出时闪一下，别让人漏掉节奏变了 */
+.cd-dir-ring.flip { animation: cd-dir-flip 0.62s ease-out; }
+@keyframes cd-dir-flip {
+  0% { border-color: var(--cd-gold); box-shadow: 0 0 0 0 rgba(242, 193, 78, 0.55); }
+  100% { border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 0 0 16px rgba(242, 193, 78, 0); }
+}
+/* 箭头贴环的上/右/下/左：14px 盒子精确居中，三角形放里头转，镜像也不歪 */
+.cd-dir-ring i { position: absolute; width: 14px; height: 14px; display: grid; place-items: center; }
+.cd-dir-ring i::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 7px solid var(--cd-gold);
+  border-top: 4.5px solid transparent;
+  border-bottom: 4.5px solid transparent;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
+}
+.cd-dir-ring i:nth-child(1) { top: 0; left: 50%; margin: -7px 0 0 -7px; }
+.cd-dir-ring i:nth-child(2) { top: 50%; right: 0; margin: -7px -7px 0 0; }
+.cd-dir-ring i:nth-child(3) { bottom: 0; left: 50%; margin: 0 0 -7px -7px; }
+.cd-dir-ring i:nth-child(4) { top: 50%; left: 0; margin: -7px 0 0 -7px; }
+/* 顺时针切线：上往右、右往下、下往左、左往上 */
+.cd-dir-ring i:nth-child(1)::before { transform: rotate(0deg); }
+.cd-dir-ring i:nth-child(2)::before { transform: rotate(90deg); }
+.cd-dir-ring i:nth-child(3)::before { transform: rotate(180deg); }
+.cd-dir-ring i:nth-child(4)::before { transform: rotate(-90deg); }
 
 /* ---------- 卡牌 ---------- */
 .cd-card {
@@ -349,6 +431,25 @@ button { font: inherit; }
 .cd-hand .cd-card { margin-left: calc(var(--cd-step, calc(var(--cd-cw) * 0.82)) - var(--cd-cw)); }
 .cd-hand .cd-card:first-child { margin-left: 0; }
 .cd-hand-empty { align-self: center; color: var(--cd-muted); font-size: 12px; padding: 20px; }
+/* 轮到自己：手牌区顶上亮一条金边，抬一眼就知道该动了 */
+.cd-hand-wrap.my-turn::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: min(92%, 340px);
+  height: 3px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--cd-gold), transparent);
+  box-shadow: 0 0 10px rgba(242, 193, 78, 0.6);
+  animation: cd-turn-bar 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes cd-turn-bar {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
 
 .cd-actions { position: relative; display: flex; gap: 6px; align-items: stretch; flex-wrap: wrap; justify-content: center; min-width: 0; padding: 0 2px 2px; }
 .cd-btn {
