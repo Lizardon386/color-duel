@@ -1,7 +1,7 @@
 # color-duel（变色对决）· 上下文与进展
 
 > 交接卡：当前状态、下一步、坑与验证命令。
-> 最近更新：2026-10-30　模式：三档（README / DESIGN / CONTEXT）　锚点：`899e836`（main，未推送；本次交接提交在其后）
+> 最近更新：2026-10-30　模式：三档（README / DESIGN / CONTEXT）　锚点：`cdd796f`（main，已推 origin；本次交接提交在其后）
 
 ## 1. 文档目录
 
@@ -27,13 +27,13 @@
 - **联调 PASS**：协议级（房间 4NTW）改规则后 `rulesHash` 变化、ready 重置、广播、中途 `seatResume`、rematch 7/7；UI（ZYT7）房主编辑/玩家只读、规则同步、开局、资料、刷新坐回；重启恢复（FFZ9）config/hash/手牌恢复后继续出牌。初版包在平台 `games/color-duel.bpmap` 留了一份。
 - 游戏 smoke：2/4/8 席 × 多 seed 共 40 局，20 对同 seed 的动作轨迹与最终状态一致、0 被拒；牌 ID 因模块级 `deckSeq/refillSeq` 跨运行不同。
 - **公开仓库已创建并推送**：<https://github.com/Lizardon386/color-duel>（`main`，CI 绿）；README 已统一标题、去掉商业变体名、新增「运行平台与依赖」小节（提交 `efccf78`）；`uno-online` 未改动。
-- **v0.1.0 已发布**：tag `v0.1.0`（指向 `e61d256`）+ GitHub Release，附 `color-duel.bpmap`（102,353 字节，SHA256 `b85db75129c4adbb807c631854aa6cb129d02239fedfb41125b6a05bc70916c8`）。
+- **v0.2.0 已发布**：tag `v0.2.0`（指向 `cdd796f`）+ [GitHub Release](https://github.com/Lizardon386/color-duel/releases/tag/v0.2.0)，附 0.2.0 `.bpmap`（104,268 字节，SHA256 `72410de4f486fffcfe880a6586299cbe1e1a35326184390e881d65406eb9b3ac`）与 `SHA256SUMS`；v0.1.0 Release 保留。
 
 ## 4. 下一步
 
 1. **用户自测**：平台 `games/` 已是 0.2.0 包（SHA `72410de4…`）；建房试号码牌改色、AI 难度、转交/解散。
 2. **平台席位行改造（已完成）**：平台 `a634d57`；三栏布局、号码牌选色、无设置按钮、电脑内联难度、转交房主、解散房间；最终 UI + 协议/UI 猴测均 0 违规。
-3. **0.2.0 发布**：构建完成；推送 main → CI → tag `v0.2.0` + Release（附 `.bpmap` 与 SHA256SUMS）进行中。
+3. **0.2.0 已发布**：main CI 绿，tag/Release 已建；后续只等用户自测反馈，UI 布局/format 2 仍待拍板。
 4. **UI 布局**：Hallmark audit 已出（3 critical / 4 major / 3 minor），A 布局重构或 B 最小修正待用户拍板；未动代码。
 5. **format 2（压缩二进制包）**：用户说后面再说，不动代码；重启讨论时按之前的 `BPMAP2` 方案。
 
@@ -91,7 +91,7 @@ npx bpmap doctor dist-pack --host http://127.0.0.1:3178
 
 ## 8. 交接记录
 
-- 2026-10-30 Qoder：**0.2.0 发布**：版本 0.2.0；seatOptions 座位颜色/逐座难度；SDK 0.4.0 registry；README/DESIGN 同步；37/37；平台 a634d57 三栏布局下改色/难度/转交/解散通过；协议 717、UI 909 猴测 0 违规；包 72410de4（104,268B）；发布 main/tag/Release 进行中。
+- 2026-10-30 Qoder：**0.2.0 发布**：版本 0.2.0；seatOptions 座位颜色/逐座难度；SDK 0.4.0 registry；README/DESIGN 同步；37/37；平台 a634d57 三栏布局下改色/难度/转交/解散通过；协议 717、UI 909 猴测 0 违规；包 72410de4（104,268B）；main `cdd796f` 已推，tag `v0.2.0` + Release 已建，CI 41023620800 绿。
 - 2026-10-29 Qoder：**v0.1.0 发布**：tag `v0.1.0`（指向 `e61d256`）+ GitHub Release，附 `color-duel.bpmap`（SHA256 `b85db751…`）；CI 绿。
 - 2026-10-29 Qoder：**公开仓库与 README**：创建 `Lizardon386/color-duel` 并推 `main`（`65c0dcf`），CI run 40842602844 绿；README 统一标题、去掉 No Mercy、新增「运行平台与依赖」小节（`efccf78`，CI 40842888001 绿）；用户暂不自测，`v0.1.0` tag 待定。
 - 2026-10-29 Qoder：**SDK 0.3.0 正式依赖**：四包已发 npm（latest，tag `sdk-v0.3.0` + Release）；`game-sdk` / `sdk-tools` 切 `^0.3.0`，lock 指向 registry；`npm test` 33/33、构建、doctor（含 `--host`）通过；包哈希不变 `b85db751…`；提交 `1a78b9e`。
