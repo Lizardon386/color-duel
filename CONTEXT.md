@@ -1,7 +1,7 @@
 # color-duel（变色对决）· 上下文与进展
 
 > 交接卡：当前状态、下一步、坑与验证命令。
-> 最近更新：2026-10-30　模式：三档（README / DESIGN / CONTEXT）　锚点：`cdd796f`（main，已推 origin；本次交接提交在其后）
+> 最近更新：2026-10-30　模式：三档（README / DESIGN / CONTEXT）　锚点：`d761737`（main，已推 origin；本次交接提交在其后）
 
 ## 1. 文档目录
 
@@ -22,7 +22,7 @@
 - **代码与平台联调完成。** 规则层、状态机、机器人、客户端、规则资料与 rule-config 声明已实现并验证。
 - `npm test` **37/37**；`npm run build` 生成 **0.2.0** 包 `dist/color-duel.bpmap`（文件 104,268 字节，SHA256 `72410de4f486fffcfe880a6586299cbe1e1a35326184390e881d65406eb9b3ac`）；`bpmap doctor` 本地与 `--host` 通过；平台 `games/` 已装 0.2.0 包。
 - **座位级选项已接**（SDK 0.4.0 registry）：`seatOptions` 声明 `difficulty`（仅 ai，easy/normal/cold，默认 easy）与 `color`（host/player/ai；#ef4444 / #f59e0b / #22c55e / #3b82f6）；`normalizeSeatOptions` 先按角色给默认（AI easy、颜色按 slot 轮转）再用合法的 raw 覆盖；AI 逐座读 `options.difficulty`，服务端 serialize 带每座 `options`，客户端座位条用座位框颜色表示（不再画色点）；全局 `ruleConfig.difficulty` 已删除。最终联调：平台 `a634d57`（三栏布局）+ 本包，号码牌改色/AI 难度/转交房主/解散房间通过；协议猴测 seed 717（8×300×3）0 违规；UI 猴测 seed 909（4×60）0 违规。
-- SDK 0.4.0 **已发 npm**（四包 `latest` 均 0.4.0；tag `sdk-v0.4.0` + Release）；本仓库 `@lizardon386/game-sdk` / `sdk-tools` 已是 `^0.4.0`，lock 指向 registry，四包都在本仓库 `node_modules`（0.4.0）；依赖切换见本次提交。
+- SDK 0.4.0 **已发 npm**（四包 `latest` 均 0.4.0；tag `sdk-v0.4.0` + Release）；本仓库 `@lizardon386/game-sdk` / `sdk-tools` 已是 `^0.4.0`，lock 指向 registry，四包都在本仓库 `node_modules`（0.4.0）；依赖切换见提交 `899e836`。
 - 平台侧（3178 仓库，232/232）：房间内「本局规则」卡、资料懒加载、单入口壳、席位行号码牌选色/电脑难度下拉、三栏布局、转交房主/解散房间；平台交接卡在 `a634d57`。
 - **联调 PASS**：协议级（房间 4NTW）改规则后 `rulesHash` 变化、ready 重置、广播、中途 `seatResume`、rematch 7/7；UI（ZYT7）房主编辑/玩家只读、规则同步、开局、资料、刷新坐回；重启恢复（FFZ9）config/hash/手牌恢复后继续出牌。初版包在平台 `games/color-duel.bpmap` 留了一份。
 - 游戏 smoke：2/4/8 席 × 多 seed 共 40 局，20 对同 seed 的动作轨迹与最终状态一致、0 被拒；牌 ID 因模块级 `deckSeq/refillSeq` 跨运行不同。
@@ -91,10 +91,9 @@ npx bpmap doctor dist-pack --host http://127.0.0.1:3178
 
 ## 8. 交接记录
 
+- 2026-10-30 Qoder：**交接**：0.2.0 已发布（tag/Release，包 72410de4）；平台 a634d57 三栏布局下改色/难度/转交/解散、232/232、协议 717/UI 909 猴测均通过；下一家按「接盘」读卡，UI 布局/format 2 待拍板。
 - 2026-10-30 Qoder：**0.2.0 发布**：版本 0.2.0；seatOptions 座位颜色/逐座难度；SDK 0.4.0 registry；README/DESIGN 同步；37/37；平台 a634d57 三栏布局下改色/难度/转交/解散通过；协议 717、UI 909 猴测 0 违规；包 72410de4（104,268B）；main `cdd796f` 已推，tag `v0.2.0` + Release 已建，CI 41023620800 绿。
 - 2026-10-29 Qoder：**v0.1.0 发布**：tag `v0.1.0`（指向 `e61d256`）+ GitHub Release，附 `color-duel.bpmap`（SHA256 `b85db751…`）；CI 绿。
 - 2026-10-29 Qoder：**公开仓库与 README**：创建 `Lizardon386/color-duel` 并推 `main`（`65c0dcf`），CI run 40842602844 绿；README 统一标题、去掉 No Mercy、新增「运行平台与依赖」小节（`efccf78`，CI 40842888001 绿）；用户暂不自测，`v0.1.0` tag 待定。
 - 2026-10-29 Qoder：**SDK 0.3.0 正式依赖**：四包已发 npm（latest，tag `sdk-v0.3.0` + Release）；`game-sdk` / `sdk-tools` 切 `^0.3.0`，lock 指向 registry；`npm test` 33/33、构建、doctor（含 `--host`）通过；包哈希不变 `b85db751…`；提交 `1a78b9e`。
 - 2026-10-28 Qoder：**联调收工**：SDK 0.3.0 link；协议 4NTW / UI ZYT7 / 重启 FFZ9 全 PASS；33/33、smoke 40 局动作可复现（牌 ID 例外）；初版包 `dist/color-duel.bpmap`（SHA `b85db751…`），平台 `games/` 留了一份给用户自测；SDK 发布与公开仓库仍待用户确认。
-- 2026-10-28 Qoder：**交接**：交给会话 `835cf812`；代码与文档已就绪（33/33），剩余真机联调、SDK 0.3.0 发布（待用户确认）、公开仓库与 CI。
-- 2026-10-28 Qoder：**重构落地**。从 `uno-online` 移植规则、状态机、AI、界面与规则文案；新增 rule-config 与 reference 声明；33 例测试、构建与 doctor 通过；平台联调与公开发布待做。
