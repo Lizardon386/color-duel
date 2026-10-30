@@ -19,7 +19,7 @@ export const SEAT_OPTIONS: SeatOptionsSpec = {
       label: '电脑强度',
       description: '仅电脑位可设；每个电脑位独立。',
       roles: ['ai'],
-      default: 'normal',
+      default: 'easy',
       options: [
         { value: 'easy', label: '简单' },
         { value: 'normal', label: '中等' },
@@ -63,7 +63,7 @@ export function normalizeSeatOptions(
   raw: Record<string, unknown> | undefined,
 ): Record<string, unknown> {
   const options: Record<string, unknown> = {};
-  if (role === 'ai') options.difficulty = 'normal';
+  if (role === 'ai') options.difficulty = 'easy';
   if (role !== 'spectator') options.color = defaultSeatColor(slot);
   if (role === 'ai' && isDifficulty(raw?.difficulty)) options.difficulty = raw.difficulty;
   if (role !== 'spectator' && isSeatColor(raw?.color)) options.color = raw.color;
@@ -71,7 +71,7 @@ export function normalizeSeatOptions(
 }
 
 export function seatDifficulty(raw: Record<string, unknown> | undefined): Difficulty {
-  return isDifficulty(raw?.difficulty) ? raw.difficulty : 'normal';
+  return isDifficulty(raw?.difficulty) ? raw.difficulty : 'easy';
 }
 
 export function seatColor(raw: Record<string, unknown> | undefined, slot: number): SeatColor {

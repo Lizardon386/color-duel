@@ -6,6 +6,7 @@ import {
   SEAT_OPTIONS,
   defaultSeatColor,
   normalizeSeatOptions,
+  seatDifficulty,
 } from '../dist-ts/server/seat-options.js';
 import { C, makeGame, resetTable } from './harness.mjs';
 
@@ -17,7 +18,8 @@ test('seatOptions 声明通过 SDK 校验，字段角色正确', () => {
 
   const difficulty = SEAT_OPTIONS.fields.find((field) => field.key === 'difficulty');
   assert.deepEqual(difficulty.roles, ['ai']);
-  assert.equal(difficulty.default, 'normal');
+  assert.equal(difficulty.default, 'easy');
+  assert.equal(seatDifficulty(undefined), 'easy');
   const color = SEAT_OPTIONS.fields.find((field) => field.key === 'color');
   assert.deepEqual(color.roles, ['host', 'player', 'ai']);
   assert.deepEqual(
@@ -26,13 +28,13 @@ test('seatOptions 声明通过 SDK 校验，字段角色正确', () => {
   );
 });
 
-test('normalizeSeatOptions：按槽位循环默认色，AI 默认 normal，非法值回落', () => {
+test('normalizeSeatOptions：按槽位循环默认色，AI 默认 easy，非法值回落', () => {
   assert.deepEqual(normalizeSeatOptions('host', 1, undefined), { color: 'red' });
   assert.deepEqual(normalizeSeatOptions('player', 2, undefined), { color: 'yellow' });
-  assert.deepEqual(normalizeSeatOptions('ai', 3, undefined), { difficulty: 'normal', color: 'green' });
+  assert.deepEqual(normalizeSeatOptions('ai', 3, undefined), { difficulty: 'easy', color: 'green' });
   assert.deepEqual(normalizeSeatOptions('ai', 4, { difficulty: 'cold', color: 'blue' }), { difficulty: 'cold', color: 'blue' });
   assert.deepEqual(normalizeSeatOptions('host', 5, { color: 'blue' }), { color: 'blue' });
-  assert.deepEqual(normalizeSeatOptions('ai', 6, { difficulty: 'bogus', color: 'bogus' }), { difficulty: 'normal', color: 'yellow' });
+  assert.deepEqual(normalizeSeatOptions('ai', 6, { difficulty: 'bogus', color: 'bogus' }), { difficulty: 'easy', color: 'yellow' });
   assert.deepEqual(normalizeSeatOptions('spectator', 901, { difficulty: 'cold', color: 'blue' }), {});
   assert.equal(defaultSeatColor(0), 'red');
   assert.equal(defaultSeatColor(1), 'red');

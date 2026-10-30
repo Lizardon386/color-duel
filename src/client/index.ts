@@ -327,12 +327,7 @@ function renderSeats(current: ClientView, me: PlayerView | undefined): void {
     if (player.cardCount === 1) seat.classList.add('one');
 
     const color = player.options?.color;
-    if (color) {
-      const dot = el('span', 'cd-seat-color');
-      dot.style.background = SEAT_COLOR_HEX[color] ?? colorValue(color);
-      dot.setAttribute('aria-hidden', 'true');
-      seat.append(dot);
-    }
+    if (color) seat.style.setProperty('--cd-seat-color', SEAT_COLOR_HEX[color] ?? colorValue(color));
 
     const name = el('span', 'cd-seat-name');
     name.textContent = player.name;
