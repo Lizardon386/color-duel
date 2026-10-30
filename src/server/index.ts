@@ -5,7 +5,7 @@ import { SEAT_OPTIONS, normalizeSeatOptions } from './seat-options.js';
 
 export const GAME_ID = 'color-duel';
 export const GAME_NAME = '变色对决';
-export const GAME_VERSION = '0.1.0';
+export const GAME_VERSION = '0.2.0';
 
 export const RULE_CONFIG: RuleConfigSpec = {
   fields: [

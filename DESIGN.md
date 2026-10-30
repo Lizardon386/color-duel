@@ -1,7 +1,7 @@
 # 变色对决 · 方案架构设计
 
 > 写给维护和评审的人：目标、约束、架构、状态机、与 3178 平台的接缝、设计决策与边界都在这里。
-> 最近更新：2026-10-28
+> 最近更新：2026-10-30
 
 ## 1. 文档目录
 
@@ -20,7 +20,7 @@
 - 玩法只依赖 `@lizardon386/game-sdk` 的 `GameModule` / `GameInstance` / `Effect[]`；
 - 房间、座位、房主权限、票据、断线宽限、聊天、存档全部交回平台；
 - 客户端变成单文件 ESM，跑在 `sandbox=allow-scripts` 的 iframe 里，只渲染和发动作；
-- 规则开关通过平台的 `ruleConfig` 声明式表单呈现，规则资料通过 `reference` 懒加载。
+- 规则开关通过平台的 `ruleConfig` 声明式表单呈现，座位颜色/电脑难度走 `seatOptions`，规则资料通过 `reference` 懒加载。
 
 ### 2.2 约束
 
@@ -69,7 +69,7 @@ src/
 │  ├─ config.ts     房规归一化（含连字符 key）与计时常量
 │  ├─ bots.ts       三档决策（只产出动作，不改状态）
 │  ├─ game.ts       GameInstance：状态机、serialize、tick、快照
-│  └─ index.ts      GameModule：id/version/ruleConfig/reference
+│  └─ index.ts      GameModule：id/version/ruleConfig/seatOptions/reference
 ├─ client/
 │  ├─ index.ts      mount / onEvent / unmount，布局与动作栏
 │  ├─ cards.ts      卡面 DOM 与颜色符号
@@ -157,17 +157,21 @@ flowchart TD
 
 `serialize(viewer)` 只给该座位自己的 `hand`；观战传 `null`，所有 `hand` 都是 `undefined`。质疑窗口只下发 `heldCount` 与可质疑名单，确认质疑后用一次性 `toSeat` 事件把当时的手牌快照发给提问者。
 
-### 6.2 规则表单（rule-config）
+### 6.2 规则表单（ruleConfig）
 
-`GameModule.ruleConfig` 声明 8 个字段；平台在建房时渲染、把值放进 `roomCreate.config`。游戏侧仍用 `normalizeConfig` 兜底：非法值回落默认、关接龙连带关质疑、关绝情无上限。
+`GameModule.ruleConfig` 声明 7 个字段；平台在房间的「本局规则」卡渲染，把值放进 `roomCreate.config`。游戏侧仍用 `normalizeConfig` 兜底：非法值回落默认、关接龙连带关质疑、关绝情无上限。
 
 字段 key 必须是 `^[a-z][a-z0-9-]{0,31}$`，所以内部 camelCase 的 `noTurnTimer` 在表单里是 `no-turn-timer`，由 `normalizeConfig` 翻译。
 
-### 6.3 规则资料（reference）
+### 6.3 座位选项（seatOptions）
+
+`GameModule.seatOptions` 声明 `difficulty`（仅 ai，easy/normal/cold，默认 easy）和 `color`（host/player/ai，红黄绿蓝，带十六进制色块）。`normalizeSeatOptions(role, slot, raw)` 负责按角色收口、按 `slot` 轮转默认色（1 红 2 黄 3 绿 4 蓝…），非法值回落；平台建座、改选项和重启恢复都会调用。AI 决策逐座读 `seat.options.difficulty`；座位颜色写进 `serialize` 的 `players[].options`，客户端用座位框颜色呈现。改选项走 `hostSeat {op:'setOptions'}`，只房主、只 lobby，平台持久化并广播。
+
+### 6.4 规则资料（reference）
 
 `GameModule.reference = { entry: 'reference.json' }`；平台首次展开面板时按 `/games/color-duel/reference.json` 懒加载，并用 SDK 的 `parseGameReference` 校验。文档只含纯文本与图片，不解析 HTML。
 
-### 6.4 房间头的倒计时
+### 6.5 房间头的倒计时
 
 `serialize` 额外给出 `deadlineInMs`（当前回合剩余毫秒），平台的房间头会显示「剩余 N 秒」。游戏界面不画回合倒计时，避免同一屏出现两个秒数；报牌 5 秒与质疑 10 秒的窗口倒计时仍在游戏内显示。
 
@@ -188,7 +192,7 @@ flowchart TD
 
 - **不做**：账号、匹配、排行榜、观战延迟、回放、断线托管策略（平台负责宽限）。
 - **不碰**：socket、票据、本机存储、平台相位与座位表。
-- **电脑位**：平台只提供座位；行为、节奏、难度都由游戏实现，`ai` 座位的 `connected` 不可靠。
+- **电脑位**：平台只提供座位；行为、节奏由游戏实现，每个 `ai` 座位的难度读自己的 `options.difficulty`，`connected` 不可靠。
 - **人类掉线**：平台保留座位；游戏按回合超时代打，重连后继续。
 - **观战**：看不到任何手牌；质疑揭示只发给提问者。
 - **游戏结束**：内部 `state='ended'`，不关房间；房主可用 `rematch`，其他玩家只能看结算。
@@ -201,6 +205,7 @@ flowchart TD
 | [test/rules.test.mjs](test/rules.test.mjs) | 牌堆与开关、合法性、抽牌/补充牌、rule-config 与 reference 契约 |
 | [test/game.test.mjs](test/game.test.mjs) | 开局、出牌、接龙、质疑、碰、甩色、0/7、报牌、上限、超时、座位离开、存档、rematch、隐私 |
 | [test/bots.test.mjs](test/bots.test.mjs) | 机器人自走收敛、牌 id 不重复、PVE/PVP 计时差异 |
+| [test/seat-options.test.mjs](test/seat-options.test.mjs) | seatOptions 声明、按 slot 默认色、AI 默认 easy、serialize/resume、逐座难度 |
 
 `npm test` 先 `tsc` 编译到 `dist-ts/`，再用 `node --test` 跑 `.mjs` 测试。
 

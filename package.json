@@ -1,6 +1,6 @@
 {
   "name": "color-duel",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "变色对决：2~8 人联机卡牌游戏包",
   "license": "MIT",
