@@ -20,22 +20,21 @@
 ## 3. 现在在哪
 
 - **代码与平台联调完成。** 规则层、状态机、机器人、客户端、规则资料与 rule-config 声明已实现并验证。
-- `npm test` **37/37**；`npm run build` 生成 **0.2.0** 包 `dist/color-duel.bpmap`（文件 104,268 字节，SHA256 `72410de4f486fffcfe880a6586299cbe1e1a35326184390e881d65406eb9b3ac`）；`bpmap doctor` 本地与 `--host` 通过；平台 `games/` 已装 0.2.0 包。
+- `npm test` **37/37**；`npm run build` 生成 **0.2.1** 包 `dist/color-duel.bpmap`（112,059 字节，SHA256 `6738725bfca51ab3f803dd9b6bc8a48b3283ae8b15daf6c97e52435f32b18efd`）；`bpmap doctor` 本地通过；平台 `games/` 已换 0.2.1。
+- **界面按 UNO 牌桌习惯重做（0.2.1）**：席位小牌背、生效色光晕、待罚徽标、手牌压缩 + 两字标签、±3° 扇形、操作条居中；修掉「11 张手牌把整桌撑宽、右侧按钮被裁」的网格缺陷。截图见 `docs/images/game-table.png`。
 - **座位级选项已接**（SDK 0.4.0 registry）：`seatOptions` 声明 `difficulty`（仅 ai，easy/normal/cold，默认 easy）与 `color`（host/player/ai；#ef4444 / #f59e0b / #22c55e / #3b82f6）；`normalizeSeatOptions` 先按角色给默认（AI easy、颜色按 slot 轮转）再用合法的 raw 覆盖；AI 逐座读 `options.difficulty`，服务端 serialize 带每座 `options`，客户端座位条用座位框颜色表示（不再画色点）；全局 `ruleConfig.difficulty` 已删除。最终联调：平台 `a634d57`（三栏布局）+ 本包，号码牌改色/AI 难度/转交房主/解散房间通过；协议猴测 seed 717（8×300×3）0 违规；UI 猴测 seed 909（4×60）0 违规。
 - SDK 0.4.0 **已发 npm**（四包 `latest` 均 0.4.0；tag `sdk-v0.4.0` + Release）；本仓库 `@lizardon386/game-sdk` / `sdk-tools` 已是 `^0.4.0`，lock 指向 registry，四包都在本仓库 `node_modules`（0.4.0）；依赖切换见提交 `899e836`。
 - 平台侧（3178 仓库，232/232）：房间内「本局规则」卡、资料懒加载、单入口壳、席位行号码牌选色/电脑难度下拉、三栏布局、转交房主/解散房间；平台交接卡在 `a634d57`。
 - **联调 PASS**：协议级（房间 4NTW）改规则后 `rulesHash` 变化、ready 重置、广播、中途 `seatResume`、rematch 7/7；UI（ZYT7）房主编辑/玩家只读、规则同步、开局、资料、刷新坐回；重启恢复（FFZ9）config/hash/手牌恢复后继续出牌。初版包在平台 `games/color-duel.bpmap` 留了一份。
 - 游戏 smoke：2/4/8 席 × 多 seed 共 40 局，20 对同 seed 的动作轨迹与最终状态一致、0 被拒；牌 ID 因模块级 `deckSeq/refillSeq` 跨运行不同。
-- **公开仓库已创建并推送**：<https://github.com/Lizardon386/color-duel>（`main`，CI 绿）；README 已统一标题、去掉商业变体名、新增「运行平台与依赖」小节（提交 `efccf78`）；`uno-online` 未改动。
-- **v0.2.0 已发布**：tag `v0.2.0`（指向 `cdd796f`）+ [GitHub Release](https://github.com/Lizardon386/color-duel/releases/tag/v0.2.0)，附 0.2.0 `.bpmap`（104,268 字节，SHA256 `72410de4f486fffcfe880a6586299cbe1e1a35326184390e881d65406eb9b3ac`）与 `SHA256SUMS`；v0.1.0 Release 保留。
+- **公开仓库与发布**：<https://github.com/Lizardon386/color-duel>（`main`，CI 绿）；README 统一标题、去掉商业变体名、新增「运行平台与依赖」（`efccf78`）；tag `v0.2.0`（指向 `cdd796f`）+ [Release](https://github.com/Lizardon386/color-duel/releases/tag/v0.2.0) 附 0.2.0 包（104,268 B，SHA256 `72410de4…`）与 `SHA256SUMS`；v0.1.0 保留。
 
 ## 4. 下一步
 
-1. **用户自测**：平台 `games/` 已是 0.2.0 包（SHA `72410de4…`）；建房试号码牌改色、AI 难度、转交/解散。
-2. **平台席位行改造（已完成）**：平台 `a634d57`；三栏布局、号码牌选色、无设置按钮、电脑内联难度、转交房主、解散房间；最终 UI + 协议/UI 猴测均 0 违规。
-3. **0.2.0 已发布**：main CI 绿，tag/Release 已建；后续只等用户自测反馈，UI 布局/format 2 仍待拍板。
-4. **UI 布局**：Hallmark audit 已出（3 critical / 4 major / 3 minor），A 布局重构或 B 最小修正待用户拍板；未动代码。
-5. **format 2（压缩二进制包）**：用户说后面再说，不动代码；重启讨论时按之前的 `BPMAP2` 方案。
+1. **用户自测 0.2.1**：平台 `games/` 已换新包（SHA `6738725b…`），重启宿主后建房；重点看 8 席、10 张以上手牌、报牌倒计时、弃牌弹窗。
+2. **0.2.1 未发布**：本轮 UI 改动已提交 `main`，未打 tag/Release；等自测通过再决定。
+3. **format 2（压缩二进制包）**：用户说后面再说，不动代码；重启讨论时按之前的 `BPMAP2` 方案。
+4. **可选打磨**：宽屏留白（席位环排布）、结算页战绩，都未立项。
 
 牌 ID 跨运行不复现保持现状（`deckSeq/refillSeq` 不改）。
 
@@ -43,9 +42,10 @@
 
 - **`noTurnTimer` 的对外 key 是 `no-turn-timer`**：rule-config 的 key 只允许小写连字符，`normalizeConfig` 负责翻译；不要再把 camelCase 写进表单。
 - **座位选项只在 `normalizeSeatOptions` 收口**：`difficulty` 只给 ai、`color` 给 host/player/ai；AI 默认 easy，默认色按 slot 循环；非法值回落，不要在别处再补默认。全局难度已删，别写回 `ruleConfig`。
-- **颜色从 serialize 读**：服务端 `players[].options` 带 color/difficulty，客户端座位条据此画点；`bp:room.seats` 只作补充，不是唯一来源。
+- **颜色从 serialize 读**：服务端 `players[].options` 带 color/difficulty，客户端座位框底色与描边据此着色；`bp:room.seats` 只作补充，不是唯一来源。
 - **SDK 依赖已走 registry 0.4.0**：`package.json` / lock 已提交；升级时改版本并重生成 lock，不要再 `npm link`。
-- **卡牌高度变量**：`--cd-ch` 必须在 `.cd-root` 上定义；放在 `:root` 会按默认 `--cd-cw` 提前求值，卡片变正方形且手牌被裁。
+- **卡牌高度变量**：`--cd-ch` 必须在 `.cd-root` 上定义；放在 `:root` 会按默认 `--cd-cw` 提前求值，卡片变正方形且手牌被裁。局部改 `--cd-cw` 时要同时重算 `--cd-ch`（见 `.cd-reveal`），否则卡片被拉成竖条。
+- **网格列宽**：`.cd-root` / `.cd-main` 必须写 `minmax(0, 1fr)`，行容器补 `min-width: 0`；否则手牌的 max-content 撑宽整桌，右侧按钮被裁、`overflow-x:auto` 失效。
 - **`[hidden]` 需要显式 `display:none !important`**：否则被 `.cd-chip` 的 flex 覆盖，「待罚 +0」会一直显示。
 - **不要用 `end` Effect 结束对局**：平台会把房间置为 ended 并踢回大厅，丢掉结算与 rematch；本游戏只改内部 `state='ended'`。
 - **tick 必须返回非空 effect**：平台只在 effect 非空时 fanout；机器人动作要返回轻量 `broadcast`。
@@ -91,6 +91,7 @@ npx bpmap doctor dist-pack --host http://127.0.0.1:3178
 
 ## 8. 交接记录
 
+- 2026-10-30 WorkBuddy：**UI 重做（0.2.1）**：先做 UI 评审（600×360 实测 11 张手牌即撑破整桌、右侧按钮被裁；弃牌池把牌切半），再按 UNO 牌桌习惯重排：席位小牌背、生效色光晕、待罚徽标、手牌动态压缩 + 两字标签 + 扇形、操作条居中、禁用主按钮中性化、报牌红胶囊；37/37、构建、doctor 通过；包 `6738725b`（112,059B）；截图已更新。
 - 2026-10-30 Qoder：**交接**：0.2.0 已发布（tag/Release，包 72410de4）；平台 a634d57 三栏布局下改色/难度/转交/解散、232/232、协议 717/UI 909 猴测均通过；下一家按「接盘」读卡，UI 布局/format 2 待拍板。
 - 2026-10-30 Qoder：**0.2.0 发布**：版本 0.2.0；seatOptions 座位颜色/逐座难度；SDK 0.4.0 registry；README/DESIGN 同步；37/37；平台 a634d57 三栏布局下改色/难度/转交/解散通过；协议 717、UI 909 猴测 0 违规；包 72410de4（104,268B）；main `cdd796f` 已推，tag `v0.2.0` + Release 已建，CI 41023620800 绿。
 - 2026-10-29 Qoder：**v0.1.0 发布**：tag `v0.1.0`（指向 `e61d256`）+ GitHub Release，附 `color-duel.bpmap`（SHA256 `b85db751…`）；CI 绿。

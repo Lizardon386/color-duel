@@ -28,6 +28,15 @@ const VALUE_TAG: Record<string, string> = {
   wild4: '先反转',
 };
 
+/** 手牌挤在一起时用的短标签，保证不被下一张牌压掉。 */
+const VALUE_TAG_SHORT: Record<string, string> = {
+  '0': '全换',
+  '7': '换手',
+  flush: '弃色',
+  skipall: '全跳',
+  wild4: '反转',
+};
+
 export const isBlack = (card: Card): boolean => card.color === 'wild';
 
 export function cardLabel(card: Card): string {
@@ -58,20 +67,20 @@ export function createCard(card: Card): HTMLElement {
   top.className = 'cd-corner cd-tl';
   top.textContent = VALUE_TEXT[card.value] ?? card.value;
 
-  const bottom = document.createElement('span');
-  bottom.className = 'cd-corner cd-br';
-  bottom.textContent = VALUE_TEXT[card.value] ?? card.value;
-
   element.append(face, glyph, top);
 
   const tag = VALUE_TAG[card.value];
   if (tag) {
     const badge = document.createElement('span');
     badge.className = 'cd-tag';
-    badge.textContent = tag;
+    const full = document.createElement('span');
+    full.className = 'cd-tag-full';
+    full.textContent = tag;
+    const short = document.createElement('span');
+    short.className = 'cd-tag-short';
+    short.textContent = VALUE_TAG_SHORT[card.value] ?? tag;
+    badge.append(full, short);
     element.append(badge);
-  } else {
-    element.append(bottom);
   }
   return element;
 }

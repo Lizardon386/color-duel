@@ -20,6 +20,8 @@ interface Refs {
   draw: HTMLButtonElement;
   drawCount: HTMLElement;
   discard: HTMLElement;
+  glow: HTMLElement;
+  penalty: HTMLElement;
   handWrap: HTMLElement;
   hand: HTMLElement;
   actDraw: HTMLButtonElement;
@@ -46,6 +48,7 @@ let lastPhase: string | null = null;
 let lastMyCount = 0;
 let lastPending = 0;
 let lastWinner: string | null = null;
+let handCount = 0;
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -117,6 +120,10 @@ function build(host: HTMLElement): void {
   const drawCount = el('span', 'cd-draw-count');
   draw.append(drawCount);
   const discard = el('div', 'cd-discard');
+  const glow = el('div', 'cd-glow');
+  const penalty = el('span', 'cd-penalty');
+  penalty.hidden = true;
+  discard.append(glow, penalty);
   center.append(draw, discard);
   main.append(seats, center);
 
@@ -127,7 +134,7 @@ function build(host: HTMLElement): void {
   const actionBar = el('div', 'cd-actions');
   const actDraw = el('button', 'cd-btn primary');
   const actPeng = el('button', 'cd-btn');
-  const actCall = el('button', 'cd-btn danger');
+  const actCall = el('button', 'cd-btn danger cd-call');
   const actEnd = el('button', 'cd-btn ghost');
   const actResult = el('button', 'cd-btn');
   const actRematch = el('button', 'cd-btn primary');
@@ -148,6 +155,8 @@ function build(host: HTMLElement): void {
   log.append(logTitle, logList);
 
   const toasts = el('div', 'cd-toasts');
+  toasts.setAttribute('role', 'status');
+  toasts.setAttribute('aria-live', 'polite');
 
   root.append(status, main, handWrap, actionBar, log, toasts);
   host.append(root);
@@ -164,6 +173,8 @@ function build(host: HTMLElement): void {
     draw,
     drawCount,
     discard,
+    glow,
+    penalty,
     handWrap,
     hand,
     actDraw,
@@ -216,6 +227,36 @@ function resize(host: HTMLElement): void {
   const height = host.clientHeight || 360;
   const size = Math.max(40, Math.min(108, Math.floor(Math.min(width / 9.2, height / 5.2))));
   refs.root.style.setProperty('--cd-cw', `${size}px`);
+  layoutHand();
+}
+
+/**
+ * 手牌间距按张数压缩：牌多时把重叠加大，尽量让整手牌一屏放得下；
+ * 压到最小间距还放不下才横向滚动，并给两端加渐隐提示。
+ */
+function layoutHand(): void {
+  if (!refs) return;
+  const cw = Number.parseFloat(getComputedStyle(refs.root).getPropertyValue('--cd-cw')) || 65;
+  const hand = refs.hand;
+  const avail = Math.max(cw, hand.clientWidth - 12);
+  const maxStep = cw * 0.82;
+  const minStep = cw * 0.5;
+  const step = handCount > 1 ? Math.min(maxStep, Math.max(minStep, (avail - cw) / (handCount - 1))) : maxStep;
+  hand.style.setProperty('--cd-step', `${step.toFixed(2)}px`);
+  // 牌挤到四字标签放不下时换两字标签，避免文字被下一张牌切断
+  const dense = step < cw * 0.75;
+  hand.classList.toggle('dense', dense);
+  hand.classList.toggle('scrollable', hand.scrollWidth - hand.clientWidth > 1);
+
+  // 手牌做一点扇形张角，牌多时收平，避免看花
+  const cards = [...hand.querySelectorAll<HTMLElement>('.cd-card')];
+  const total = cards.length;
+  // 牌少时不扇，牌多时张角封顶 3°，避免看起来歪
+  const tilt = dense ? 0 : Math.min(3, Math.max(0, (total - 3) * 0.6));
+  cards.forEach((card, index) => {
+    const ratio = total > 1 ? (index - (total - 1) / 2) / ((total - 1) / 2) : 0;
+    card.style.setProperty('--cd-rot', `${(ratio * tilt).toFixed(2)}deg`);
+  });
 }
 
 function startTicker(): void {
@@ -228,6 +269,7 @@ function startTicker(): void {
       const left = callDeadline ? Math.max(0, callDeadline - now) : (me.callDeadlineInMs ?? 0);
       refs.actCall.textContent = `只剩一张！${(left / 1000).toFixed(1)}s`;
       refs.actCall.classList.toggle('danger', left < 2000);
+      refs.actCall.classList.toggle('urgent', left < 2000);
     }
     dialogs?.tick(now);
   }, 120);
@@ -336,6 +378,11 @@ function renderSeats(current: ClientView, me: PlayerView | undefined): void {
     count.textContent = String(player.cardCount);
     meta.append(count);
 
+    // 对手手牌用小牌背表示，比单纯一个数字更像牌桌
+    const fan = el('span', 'cd-seat-fan');
+    const backs = Math.min(player.cardCount, 6);
+    for (let i = 0; i < backs; i++) fan.append(el('i', 'cd-back'));
+
     const skip = (current.skipQueue ?? []).includes(player.seatId);
     if (player.mustCall && !player.calledLast && player.cardCount === 1) {
       meta.append(tag('未报牌', 'warn'));
@@ -346,7 +393,7 @@ function renderSeats(current: ClientView, me: PlayerView | undefined): void {
     } else if (!player.connected) {
       meta.append(tag('离线', 'off'));
     }
-    seat.append(name, meta);
+    seat.append(fan, name, meta);
     refs.seats.append(seat);
   }
 }
@@ -378,9 +425,12 @@ function renderCenter(
 
   const top = current.topCard;
   const topId = top?.id ?? '';
+  refs.glow.style.setProperty('--cd-glow', colorValue(current.activeColor));
+  refs.penalty.hidden = current.pendingDraw <= 0;
+  refs.penalty.textContent = `+${current.pendingDraw}`;
   if (refs.discard.dataset.top !== topId) {
     refs.discard.dataset.top = topId;
-    refs.discard.replaceChildren();
+    for (const node of [...refs.discard.querySelectorAll('.cd-card, .cd-ring')]) node.remove();
     if (top) {
       const card = createCard(top);
       card.classList.add('pop');
@@ -397,12 +447,15 @@ function renderCenter(
 function renderHand(current: ClientView, me: PlayerView | undefined, myTurn: boolean): void {
   if (!refs) return;
   if (!me || !me.hand) {
+    handCount = 0;
     refs.hand.replaceChildren();
     const empty = el('div', 'cd-hand-empty');
     empty.textContent = '观战中 · 看不到玩家手牌';
     refs.hand.append(empty);
+    layoutHand();
     return;
   }
+  handCount = me.hand.length;
   const ids = new Set(me.hand.map((card) => card.id));
   for (const child of [...refs.hand.children]) {
     if (child instanceof HTMLElement && child.dataset.id && !ids.has(child.dataset.id)) child.remove();
@@ -434,6 +487,7 @@ function renderHand(current: ClientView, me: PlayerView | undefined, myTurn: boo
     element.setAttribute('aria-label', label);
     refs.hand.append(element);
   }
+  layoutHand();
 }
 
 function tapCard(card: Card): void {
@@ -443,7 +497,16 @@ function tapCard(card: Card): void {
   const myTurn = view.phase === 'playing' && view.currentSeatId === me.seatId;
   const playable = myTurn && !view.challenge && view.mustDiscardNow === 0 && canPlayLocal(card, view);
   if (!playable) {
-    toast('现在不能出这张牌', true);
+    const reason = !myTurn
+      ? '还没轮到你'
+      : view.challenge
+        ? '质疑结算中，先等结果'
+        : view.mustDiscardNow > 0
+          ? '先弃牌到手牌上限'
+          : view.pendingDraw > 0
+            ? `要接 +${view.pendingDraw} 或更大的罚牌`
+            : '这张牌和顶牌对不上';
+    toast(reason, true);
     sfx.bad();
     return;
   }

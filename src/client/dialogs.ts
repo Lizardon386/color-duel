@@ -182,7 +182,7 @@ export class Dialogs {
     const title = document.createElement('h3');
     title.textContent = '弃牌到手牌上限';
     const hint = document.createElement('p');
-    hint.textContent = `手上 ${me.hand!.length} 张，超过上限 ${view.cap}，必须弃 ${need} 张才能交出台面。弃掉的牌会洗回牌堆。`;
+    hint.textContent = `手上 ${me.hand!.length} 张，上限 ${view.cap}，需要弃 ${need} 张；弃掉的牌会洗回牌堆。`;
     const pool = document.createElement('div');
     pool.className = 'cd-reveal';
     const confirm = document.createElement('button');
